@@ -12,7 +12,7 @@ data class Message(
 )
 
 data class UserInfo(
-    val uid: String,
+    val userId: String,
     val password: String
 )
 
