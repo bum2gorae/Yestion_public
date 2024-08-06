@@ -1,6 +1,8 @@
 package com.lastbullet.yestion
 
+import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 
@@ -12,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.lastbullet.yestion.ui.theme.YestionTheme
@@ -23,14 +26,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             YestionTheme {
-                Greeting()
+                Greeting(this)
             }
         }
     }
 }
 
 @Composable
-fun Greeting() {
+fun Greeting(context : Context) {
     Column {
         var user by remember { mutableStateOf("") }
         var text by remember { mutableStateOf("") }
@@ -56,15 +59,16 @@ fun Greeting() {
     └userinfo
 """.trimIndent()
         Button(onClick = {
-            LoginFunction().sendMessage(
-                Message(
-                    userId = user,
-                    text = text,
-                    timestamp = LocalDateTime.now()
-                        .format(DateTimeFormatter.ofPattern("yyyy.MM.dd.hh:mm:ss"))
-                )
-            )
-//            Toast.makeText(MainActivity(), "보내기 완료", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context,"메시지 전달 완료",Toast.LENGTH_SHORT).show()
+            //firebase에 연동되는 것을 확인. 임시로 막아두었습니다.
+//            LoginFunction().sendMessage(
+//                Message(
+//                    userId = user,
+//                    text = text,
+//                    timestamp = LocalDateTime.now()
+//                        .format(DateTimeFormatter.ofPattern("yyyy.MM.dd.hh:mm:ss"))
+//                )
+//            )
         }) {
             Text(text = "send message")
         }
@@ -80,12 +84,14 @@ fun Greeting() {
         └password
 """.trimIndent()
         Button(onClick = {
-            LoginFunction().signUpOnClick(
-                UserInfo(
-                    userId = user,
-                    password = text
-                )
-            )
+            // firebase에 연동되는 것을 확인. 임시로 막아두었습니다.
+//            LoginFunction().signUpOnClick(
+//                UserInfo(
+//                    userId = user,
+//                    password = text
+//                )
+//            )
+            Toast.makeText(context,"가입 정보 전달 완료",Toast.LENGTH_SHORT).show()
         }) {
             Text(text = "Sign up")
         }
@@ -97,6 +103,6 @@ fun Greeting() {
 @Composable
 fun GreetingPreview() {
     YestionTheme {
-        Greeting()
+        Greeting(MainActivity())
     }
 }
