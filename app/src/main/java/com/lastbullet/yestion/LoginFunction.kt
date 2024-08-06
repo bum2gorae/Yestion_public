@@ -27,5 +27,4 @@ class LoginFunction {
     fun signUpOnClick(userInfo: UserInfo) {
         database.child("userinfo").push().setValue(userInfo)
     }
-
 }
