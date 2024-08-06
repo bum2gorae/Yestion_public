@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.lastbullet.yestion.ui.theme.YestionTheme
@@ -60,15 +59,14 @@ fun Greeting(context : Context) {
 """.trimIndent()
         Button(onClick = {
             Toast.makeText(context,"메시지 전달 완료",Toast.LENGTH_SHORT).show()
-            //firebase에 연동되는 것을 확인. 임시로 막아두었습니다.
-//            LoginFunction().sendMessage(
-//                Message(
-//                    userId = user,
-//                    text = text,
-//                    timestamp = LocalDateTime.now()
-//                        .format(DateTimeFormatter.ofPattern("yyyy.MM.dd.hh:mm:ss"))
-//                )
-//            )
+            LoginFunction().sendMessage(
+                Message(
+                    userId = user,
+                    text = text,
+                    timestamp = LocalDateTime.now()
+                        .format(DateTimeFormatter.ofPattern("yyyy.MM.dd.hh:mm:ss"))
+                )
+            )
         }) {
             Text(text = "send message")
         }
@@ -84,13 +82,12 @@ fun Greeting(context : Context) {
         └password
 """.trimIndent()
         Button(onClick = {
-            // firebase에 연동되는 것을 확인. 임시로 막아두었습니다.
-//            LoginFunction().signUpOnClick(
-//                UserInfo(
-//                    userId = user,
-//                    password = text
-//                )
-//            )
+            LoginFunction().signUpOnClick(
+                UserInfo(
+                    userId = user,
+                    password = text
+                )
+            )
             Toast.makeText(context,"가입 정보 전달 완료",Toast.LENGTH_SHORT).show()
         }) {
             Text(text = "Sign up")
