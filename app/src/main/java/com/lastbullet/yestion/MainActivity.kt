@@ -44,7 +44,17 @@ fun Greeting() {
             onValueChange = { text = it },
             label = { Text(text = "text") }
         )
-
+        """
+    username에서 받은 user, text에서 받은 text, 현재 시각을 담은 timestamp를 database에 보냅니다.
+    보내진 데이터는 database의 "messages"에 저장됩니다.
+    구조 :
+ database
+    ├messages
+    │   ├userId
+    │   ├text
+    │   └timestamp
+    └userinfo
+""".trimIndent()
         Button(onClick = {
             LoginFunction().sendMessage(
                 Message(
@@ -58,16 +68,28 @@ fun Greeting() {
         }) {
             Text(text = "send message")
         }
+        """
+     username에서 받은 user, text에서 받은 text를 database에 보냅니다.
+     보내진 데이터는 database의 "userinfo"에 저장됩니다.
+     TODO: 추후 로그인 화면에서 구현할 예정입니다.
+    구조 :
+ database
+    ├messages
+    └userinfo
+        ├userId
+        └password
+""".trimIndent()
         Button(onClick = {
             LoginFunction().signUpOnClick(
                 UserInfo(
-                    uid = user,
+                    userId = user,
                     password = text
                 )
             )
         }) {
             Text(text = "Sign up")
         }
+
     }
 }
 

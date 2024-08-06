@@ -12,7 +12,7 @@ data class Message(
 )
 
 data class UserInfo(
-    val uid: String,
+    val userId: String,
     val password: String
 )
 
@@ -27,5 +27,4 @@ class LoginFunction {
     fun signUpOnClick(userInfo: UserInfo) {
         database.child("userinfo").push().setValue(userInfo)
     }
-
 }
