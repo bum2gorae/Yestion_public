@@ -1,6 +1,5 @@
 package com.lastbullet.yestion
 
-import android.os.Build
 import android.os.Bundle
 import android.text.InputType
 import android.text.Spannable
@@ -11,8 +10,6 @@ import android.text.style.UnderlineSpan
 import android.widget.EditText
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.annotation.RequiresApi
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -60,6 +56,7 @@ fun TextView() {
                 EditText(context).apply {
 
                     setAutofillHints("")
+                    // 자동완성 기능 제거(밑의 selection을 자동완성이 중복하여 사용)
                     setRawInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
                 }
             },
@@ -68,10 +65,12 @@ fun TextView() {
                 val end = view.selectionEnd
 
                 val spannableString = SpannableString(view.text)
+                // setSpan(적용할 함수, 시작점, 끝점, 적용 이후 영향위치)
                 spannableString.setSpan(
                     ForegroundColorSpan(fontcolor),
                     start,
                     end,
+                    // SPAN_(시작점 이전)_(끝점 이후)
                     Spannable.SPAN_EXCLUSIVE_INCLUSIVE
                 )
                 spannableString.setSpan(
