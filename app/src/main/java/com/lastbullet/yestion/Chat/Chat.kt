@@ -77,7 +77,8 @@ import com.google.firebase.storage.ktx.storage
 import com.lastbullet.yestion.ui.theme.YestionTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
-
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class Chat : ComponentActivity() {
@@ -463,7 +464,8 @@ fun ChatScreen(nickname: String, chatRoom: ChatRoom, onBack: () -> Unit) {
                             val message = Message(
                                 userId = nickname,
                                 text = newMessage.text,
-                                timestamp = System.currentTimeMillis()
+                                timestamp = LocalDateTime.now()
+                                    .format(DateTimeFormatter.ofPattern("yyyy.MM.dd.hh:mm:ss"))
                             )
                             if (selectedImageUri != null) {
                                 // 이미지 업로드

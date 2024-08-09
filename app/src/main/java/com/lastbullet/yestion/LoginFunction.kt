@@ -9,7 +9,7 @@ data class Message(
     val userId: String = "",
     val text: String = "",
     val imageUrl: String? = null,
-    val timestamp: Long
+    val timestamp: String
 )
 
 data class UserInfo(
@@ -21,7 +21,7 @@ data class ChatRoom(
     val name: String = "",
     val users: Map<String, Boolean> = emptyMap()
 )
-//
+
 //data class Message(
 //    val userName: String = "",
 //    val text: String = "",
