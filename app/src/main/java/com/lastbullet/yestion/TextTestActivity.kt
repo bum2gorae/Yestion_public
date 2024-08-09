@@ -28,10 +28,6 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.lastbullet.yestion.ui.theme.YestionTheme
 
 
-
-
-
-
 class TextTestActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,21 +41,17 @@ class TextTestActivity : ComponentActivity() {
 
 @Composable
 fun TextView() {
-    var fontWeight by remember { mutableIntStateOf(android.graphics.Typeface.NORMAL) }
-    var fontcolor by remember { mutableIntStateOf(android.graphics.Color.WHITE) }
-    var isUnderlined by remember { mutableStateOf(false) }
-    var typeNum by remember { mutableIntStateOf(0)}
-//    var fontWeight = android.graphics.Typeface.NORMAL
-//    var fontcolor = android.graphics.Color.WHITE
-//    var isUnderlined = false
+    var fontWeight by remember { mutableStateOf<Int?>(null) }
+    var fontColor by remember { mutableStateOf<Int?>(null) }
+    var isUnderlined by remember { mutableStateOf<Boolean?>(null) }
+    var forceUpdate by remember { mutableStateOf(false) } // 새로운 flag 추가
 
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceAround) {
         AndroidView(
-            modifier = Modifier.fillMaxWidth(), // Occupy the max size in the Compose UI tree
+            modifier = Modifier.fillMaxWidth(),
             factory = { context ->
                 EditText(context).apply {
                     setAutofillHints("")
-                    // 자동완성 기능 제거(밑의 selection을 자동완성이 중복하여 사용)
                     setRawInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
                 }
             },
@@ -68,35 +60,60 @@ fun TextView() {
                 val end = view.selectionEnd
 
                 val spannableString = SpannableString(view.text)
-                when (typeNum) {
-                1 -> {spannableString.setSpan(
-                    ForegroundColorSpan(fontcolor),
-                    start,
-                    end,
-                    Spannable.SPAN_EXCLUSIVE_INCLUSIVE
-                )}
-                2 -> {spannableString.setSpan(
-                    StyleSpan(fontWeight),
-                    start,
-                    end,
-                    Spannable.SPAN_EXCLUSIVE_INCLUSIVE
-                )}
-                3 -> {if (isUnderlined) {
+
+                fontColor?.let { color ->
                     spannableString.setSpan(
-                        UnderlineSpan(),
+                        ForegroundColorSpan(color),
                         start,
                         end,
-                        Spannable.SPAN_EXCLUSIVE_INCLUSIVE
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
-                } else {
-                    val underlineSpans = spannableString.getSpans(start, end, UnderlineSpan::class.java)
-                    for (span in underlineSpans) {
-                        spannableString.removeSpan(span)
-                    }
-                }}
                 }
+
+                fontWeight?.let { weight ->
+                    if (weight != android.graphics.Typeface.NORMAL) {
+                        spannableString.setSpan(
+                            StyleSpan(weight),
+                            start,
+                            end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    } else {
+                        val styleSpans = spannableString.getSpans(start, end, StyleSpan::class.java)
+                        for (span in styleSpans) {
+                            if (span.style == android.graphics.Typeface.BOLD || span.style == android.graphics.Typeface.ITALIC) {
+                                spannableString.removeSpan(span)
+                            }
+                        }
+                    }
+                }
+
+                isUnderlined?.let { underlined ->
+                    if (underlined) {
+                        spannableString.setSpan(
+                            UnderlineSpan(),
+                            start,
+                            end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                    } else {
+                        val underlineSpans = spannableString.getSpans(start, end, UnderlineSpan::class.java)
+                        for (span in underlineSpans) {
+                            spannableString.removeSpan(span)
+                        }
+                    }
+                }
+
                 view.setText(spannableString)
                 view.setSelection(start, end)
+
+                // Reset style properties after applying
+                fontColor = null
+                fontWeight = null
+                isUnderlined = null
+                forceUpdate = false // Reset the flag
+
+//                view.invalidate()
             }
         )
 
@@ -106,13 +123,8 @@ fun TextView() {
         ) {
             Button(
                 onClick = {
-                    typeNum = 1
-                    if (fontcolor == android.graphics.Color.RED) {
-                        fontcolor = android.graphics.Color.WHITE
-                        fontcolor = android.graphics.Color.RED
-                    } else {
-                        fontcolor = android.graphics.Color.RED
-                    }
+                    fontColor = android.graphics.Color.RED
+                    forceUpdate = !forceUpdate // Toggle flag
                 },
                 colors = ButtonDefaults.buttonColors(Color.Red),
                 modifier = Modifier.size(48.dp)
@@ -120,13 +132,8 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    typeNum = 1
-                    if (fontcolor == android.graphics.Color.GREEN) {
-                        fontcolor = android.graphics.Color.WHITE
-                        fontcolor = android.graphics.Color.GREEN
-                    } else {
-                        fontcolor = android.graphics.Color.GREEN
-                    }
+                    fontColor = android.graphics.Color.GREEN
+                    forceUpdate = !forceUpdate // Toggle flag
                 },
                 colors = ButtonDefaults.buttonColors(Color.Green),
                 modifier = Modifier.size(48.dp)
@@ -134,13 +141,8 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    typeNum = 1
-                    if (fontcolor == android.graphics.Color.BLUE) {
-                        fontcolor = android.graphics.Color.WHITE
-                        fontcolor = android.graphics.Color.BLUE
-                    } else {
-                        fontcolor = android.graphics.Color.BLUE
-                    }
+                    fontColor = android.graphics.Color.BLUE
+                    forceUpdate = !forceUpdate // Toggle flag
                 },
                 colors = ButtonDefaults.buttonColors(Color.Blue),
                 modifier = Modifier.size(48.dp)
@@ -154,13 +156,12 @@ fun TextView() {
         ) {
             Button(
                 onClick = {
-                    typeNum = 2
-                    if (fontWeight == android.graphics.Typeface.BOLD) {
-                        fontWeight = android.graphics.Typeface.NORMAL
-                        fontWeight = android.graphics.Typeface.BOLD
+                    fontWeight = if (fontWeight == android.graphics.Typeface.BOLD) {
+                        android.graphics.Typeface.NORMAL
                     } else {
-                        fontWeight = android.graphics.Typeface.BOLD
+                        android.graphics.Typeface.BOLD
                     }
+                    forceUpdate = !forceUpdate // Toggle flag
                 },
                 colors = ButtonDefaults.buttonColors(Color.White),
                 modifier = Modifier.size(48.dp)
@@ -169,13 +170,12 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    typeNum = 2
-                    if (fontWeight == android.graphics.Typeface.ITALIC) {
-                        fontWeight = android.graphics.Typeface.NORMAL
-                        fontWeight = android.graphics.Typeface.ITALIC
+                    fontWeight = if (fontWeight == android.graphics.Typeface.ITALIC) {
+                        android.graphics.Typeface.NORMAL
                     } else {
-                        fontWeight = android.graphics.Typeface.ITALIC
+                        android.graphics.Typeface.ITALIC
                     }
+                    forceUpdate = !forceUpdate // Toggle flag
                 },
                 colors = ButtonDefaults.buttonColors(Color.White),
                 modifier = Modifier.size(48.dp)
@@ -184,13 +184,8 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    typeNum = 3
-                    if (isUnderlined){
-                        isUnderlined = false
-                        isUnderlined = true
-                    } else {
-                        isUnderlined = true
-                    }
+                    isUnderlined = !(isUnderlined ?: false)
+                    forceUpdate = !forceUpdate // Toggle flag
                 },
                 colors = ButtonDefaults.buttonColors(Color.White),
                 modifier = Modifier.size(48.dp)
@@ -200,7 +195,6 @@ fun TextView() {
         }
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable
