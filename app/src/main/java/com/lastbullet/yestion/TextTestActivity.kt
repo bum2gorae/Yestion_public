@@ -48,7 +48,7 @@ fun TextView() {
     var fontWeight by remember { mutableIntStateOf(android.graphics.Typeface.NORMAL) }
     var fontcolor by remember { mutableIntStateOf(android.graphics.Color.WHITE) }
     var isUnderlined by remember { mutableStateOf(false) }
-
+    var typeNum by remember { mutableIntStateOf(0)}
 //    var fontWeight = android.graphics.Typeface.NORMAL
 //    var fontcolor = android.graphics.Color.WHITE
 //    var isUnderlined = false
@@ -68,19 +68,20 @@ fun TextView() {
                 val end = view.selectionEnd
 
                 val spannableString = SpannableString(view.text)
-                spannableString.setSpan(
+                when (typeNum) {
+                1 -> {spannableString.setSpan(
                     ForegroundColorSpan(fontcolor),
                     start,
                     end,
                     Spannable.SPAN_EXCLUSIVE_INCLUSIVE
-                )
-                spannableString.setSpan(
+                )}
+                2 -> {spannableString.setSpan(
                     StyleSpan(fontWeight),
                     start,
                     end,
                     Spannable.SPAN_EXCLUSIVE_INCLUSIVE
-                )
-                if (isUnderlined) {
+                )}
+                3 -> {if (isUnderlined) {
                     spannableString.setSpan(
                         UnderlineSpan(),
                         start,
@@ -92,6 +93,7 @@ fun TextView() {
                     for (span in underlineSpans) {
                         spannableString.removeSpan(span)
                     }
+                }}
                 }
                 view.setText(spannableString)
                 view.setSelection(start, end)
@@ -104,6 +106,7 @@ fun TextView() {
         ) {
             Button(
                 onClick = {
+                    typeNum = 1
                     if (fontcolor == android.graphics.Color.RED) {
                         fontcolor = android.graphics.Color.WHITE
                         fontcolor = android.graphics.Color.RED
@@ -117,6 +120,7 @@ fun TextView() {
             }
             Button(
                 onClick = {
+                    typeNum = 1
                     if (fontcolor == android.graphics.Color.GREEN) {
                         fontcolor = android.graphics.Color.WHITE
                         fontcolor = android.graphics.Color.GREEN
@@ -130,6 +134,7 @@ fun TextView() {
             }
             Button(
                 onClick = {
+                    typeNum = 1
                     if (fontcolor == android.graphics.Color.BLUE) {
                         fontcolor = android.graphics.Color.WHITE
                         fontcolor = android.graphics.Color.BLUE
@@ -149,6 +154,7 @@ fun TextView() {
         ) {
             Button(
                 onClick = {
+                    typeNum = 2
                     if (fontWeight == android.graphics.Typeface.BOLD) {
                         fontWeight = android.graphics.Typeface.NORMAL
                         fontWeight = android.graphics.Typeface.BOLD
@@ -163,6 +169,7 @@ fun TextView() {
             }
             Button(
                 onClick = {
+                    typeNum = 2
                     if (fontWeight == android.graphics.Typeface.ITALIC) {
                         fontWeight = android.graphics.Typeface.NORMAL
                         fontWeight = android.graphics.Typeface.ITALIC
@@ -177,6 +184,7 @@ fun TextView() {
             }
             Button(
                 onClick = {
+                    typeNum = 3
                     if (isUnderlined){
                         isUnderlined = false
                         isUnderlined = true
