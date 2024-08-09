@@ -11,11 +11,10 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Yestion">
-        <activity android:name=".MainActivity"/>
-        <activity android:name="com.example.Yestion.Login"/>
-        <activity android:name="com.example.Yestion.MainActivity"/>
-        <activity android:name=""/>
-        <activity android:name=".SplashActivity">
+        <activity android:name="com.lastbullet.Yestion.Login"/>
+        <activity android:name="com.lastbullet.Yestion."/>
+        <activity android:name="com.lastbullet.yestion.Chat"/>
+        <activity android:name=".LoginFunction">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

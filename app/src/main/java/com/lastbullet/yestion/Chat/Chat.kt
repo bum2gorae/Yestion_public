@@ -1,4 +1,4 @@
-package com.example.Yestion
+package com.lastbullet.yestion
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -78,29 +78,16 @@ import com.lastbullet.yestion.ui.theme.YestionTheme
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
-data class ChatRoom(
-    val id: String = "",
-    val name: String = "",
-    val users: Map<String, Boolean> = emptyMap()
-)
 
-data class Message(
-    val userName: String = "",
-    val text: String = "",
-    val imageUrl: String? = null,
-    val timestamp: Long = 0
-)
 
-class MainActivity : ComponentActivity() {
+class Chat : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         // 권한 요청
         if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED ||
             checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE), 1)
         }
-
         setContent {
             YestionTheme {
                 MainScreen()
@@ -447,7 +434,7 @@ fun ChatScreen(nickname: String, chatRoom: ChatRoom, onBack: () -> Unit) {
                 items(messages) { message ->
                     MessageCard(
                         message = message,
-                        isCurrentUser = message.userName == nickname
+                        isCurrentUser = message.userId == nickname
                     )
                 }
             }
@@ -474,7 +461,7 @@ fun ChatScreen(nickname: String, chatRoom: ChatRoom, onBack: () -> Unit) {
                         isSending = true
                         coroutineScope.launch {
                             val message = Message(
-                                userName = nickname,
+                                userId = nickname,
                                 text = newMessage.text,
                                 timestamp = System.currentTimeMillis()
                             )
@@ -566,7 +553,7 @@ fun MessageCard(message: Message, isCurrentUser: Boolean) {
                 }
             }
             Text(
-                text = message.userName,
+                text = message.userId,
                 fontSize = 12.sp,
                 color = Color.Gray,
                 modifier = Modifier.align(if (isCurrentUser) Alignment.End else Alignment.Start)
@@ -575,10 +562,10 @@ fun MessageCard(message: Message, isCurrentUser: Boolean) {
     }
 }
 
-@Preview
-@Composable
-fun SimpleComposablePreview() {
-}
+//@Preview
+//@Composable
+//fun SimpleComposablePreview() {
+//}
 
 
 
