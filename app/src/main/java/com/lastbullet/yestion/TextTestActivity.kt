@@ -49,12 +49,15 @@ fun TextView() {
     var fontcolor by remember { mutableIntStateOf(android.graphics.Color.WHITE) }
     var isUnderlined by remember { mutableStateOf(false) }
 
+//    var fontWeight = android.graphics.Typeface.NORMAL
+//    var fontcolor = android.graphics.Color.WHITE
+//    var isUnderlined = false
+
     Column(modifier = Modifier.fillMaxSize(), verticalArrangement = Arrangement.SpaceAround) {
         AndroidView(
             modifier = Modifier.fillMaxWidth(), // Occupy the max size in the Compose UI tree
             factory = { context ->
                 EditText(context).apply {
-
                     setAutofillHints("")
                     // 자동완성 기능 제거(밑의 selection을 자동완성이 중복하여 사용)
                     setRawInputType(InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS)
@@ -65,12 +68,10 @@ fun TextView() {
                 val end = view.selectionEnd
 
                 val spannableString = SpannableString(view.text)
-                // setSpan(적용할 함수, 시작점, 끝점, 적용 이후 영향위치)
                 spannableString.setSpan(
                     ForegroundColorSpan(fontcolor),
                     start,
                     end,
-                    // SPAN_(시작점 이전)_(끝점 이후)
                     Spannable.SPAN_EXCLUSIVE_INCLUSIVE
                 )
                 spannableString.setSpan(
@@ -86,18 +87,29 @@ fun TextView() {
                         end,
                         Spannable.SPAN_EXCLUSIVE_INCLUSIVE
                     )
+                } else {
+                    val underlineSpans = spannableString.getSpans(start, end, UnderlineSpan::class.java)
+                    for (span in underlineSpans) {
+                        spannableString.removeSpan(span)
+                    }
                 }
                 view.setText(spannableString)
                 view.setSelection(start, end)
             }
         )
+
         Row(
             horizontalArrangement = Arrangement.SpaceAround,
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(
                 onClick = {
-                    fontcolor = android.graphics.Color.RED
+                    if (fontcolor == android.graphics.Color.RED) {
+                        fontcolor = android.graphics.Color.WHITE
+                        fontcolor = android.graphics.Color.RED
+                    } else {
+                        fontcolor = android.graphics.Color.RED
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(Color.Red),
                 modifier = Modifier.size(48.dp)
@@ -105,7 +117,12 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    fontcolor = android.graphics.Color.GREEN
+                    if (fontcolor == android.graphics.Color.GREEN) {
+                        fontcolor = android.graphics.Color.WHITE
+                        fontcolor = android.graphics.Color.GREEN
+                    } else {
+                        fontcolor = android.graphics.Color.GREEN
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(Color.Green),
                 modifier = Modifier.size(48.dp)
@@ -113,21 +130,31 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    fontcolor = android.graphics.Color.BLUE
+                    if (fontcolor == android.graphics.Color.BLUE) {
+                        fontcolor = android.graphics.Color.WHITE
+                        fontcolor = android.graphics.Color.BLUE
+                    } else {
+                        fontcolor = android.graphics.Color.BLUE
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(Color.Blue),
-                modifier = Modifier.size(48.dp),
-
-                ) {
+                modifier = Modifier.size(48.dp)
+            ) {
             }
         }
+
         Row(
             horizontalArrangement = Arrangement.SpaceAround,
             modifier = Modifier.fillMaxWidth()
         ) {
             Button(
                 onClick = {
-                    fontWeight = android.graphics.Typeface.BOLD
+                    if (fontWeight == android.graphics.Typeface.BOLD) {
+                        fontWeight = android.graphics.Typeface.NORMAL
+                        fontWeight = android.graphics.Typeface.BOLD
+                    } else {
+                        fontWeight = android.graphics.Typeface.BOLD
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(Color.White),
                 modifier = Modifier.size(48.dp)
@@ -136,7 +163,12 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    fontWeight = android.graphics.Typeface.ITALIC
+                    if (fontWeight == android.graphics.Typeface.ITALIC) {
+                        fontWeight = android.graphics.Typeface.NORMAL
+                        fontWeight = android.graphics.Typeface.ITALIC
+                    } else {
+                        fontWeight = android.graphics.Typeface.ITALIC
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(Color.White),
                 modifier = Modifier.size(48.dp)
@@ -145,7 +177,12 @@ fun TextView() {
             }
             Button(
                 onClick = {
-                    isUnderlined = !isUnderlined
+                    if (isUnderlined){
+                        isUnderlined = false
+                        isUnderlined = true
+                    } else {
+                        isUnderlined = true
+                    }
                 },
                 colors = ButtonDefaults.buttonColors(Color.White),
                 modifier = Modifier.size(48.dp)
@@ -162,3 +199,15 @@ fun TextView() {
 fun PreviewTextView() {
     TextView()
 }
+
+//@Composable
+//fun OnButtonClick(onClick : () -> Unit, text : Unit) {
+//    Button(
+//        onClick = onClick,
+//        colors = ButtonDefaults.buttonColors(Color.White),
+//        modifier = Modifier.size(48.dp)
+//    ) {
+//        text
+//    }
+//}
+//
