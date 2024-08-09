@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "719411288010",
+    "firebase_url": "https://sparta-f5aee-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "sparta-f5aee",
+    "storage_bucket": "sparta-f5aee.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719411288010:android:8b8aa313426128e69da133",
+        "android_client_info": {
+          "package_name": "com.lastbullet.fishingdiary"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeYL669PKe4eF0SqFXHbJNeeMW42YOAcQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:719411288010:android:c4797a5a726934cd9da133",
+        "android_client_info": {
+          "package_name": "com.lastbullet.yestion"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeYL669PKe4eF0SqFXHbJNeeMW42YOAcQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
