@@ -73,8 +73,6 @@ dependencies {
     implementation("com.google.firebase:firebase-bom:33.1.2")
     implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth-ktx:23.0.0")
-
     implementation ("com.google.firebase:firebase-storage")
     implementation("io.coil-kt:coil-compose:2.7.0")
-
 }

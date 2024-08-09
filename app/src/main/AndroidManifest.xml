@@ -11,13 +11,15 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Yestion">
+
+
         <activity android:name="com.lastbullet.Yestion.Login"/>
-        <activity android:name="com.lastbullet.Yestion."/>
-        <activity android:name="com.lastbullet.yestion.Chat"/>
+        <activity android:name=".MainActivitybak"/>
         <activity android:name=".LoginFunction">
+        <activity android:name="com.lastbullet.yestion.Chat.Chat"/>
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
