@@ -9,12 +9,12 @@ data class Message(
     val userId: String = "",
     val text: String = "",
     val imageUrl: String? = null,
-    val timestamp: String
+    val timestamp: String = ""
 )
 
 data class UserInfo(
-    val userId: String,
-    val password: String
+    val userId: String = "",
+    val password: String = ""
 )
 data class ChatRoom(
     val id: String = "",

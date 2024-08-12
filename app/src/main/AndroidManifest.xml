@@ -15,8 +15,8 @@
 
         <activity android:name="com.lastbullet.Yestion.Login"/>
         <activity android:name=".MainActivitybak"/>
-        <activity android:name=".LoginFunction">
-        <activity android:name="com.lastbullet.yestion.Chat.Chat"/>
+        <activity android:name="com.lastbullet.yestion.Chat"
+            android:exported="true">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
