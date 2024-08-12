@@ -269,14 +269,6 @@ fun NicknameScreen(onNicknameSubmitted: (String) -> Unit) {
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
             shape = RoundedCornerShape(20.dp),
-            colors = TextFieldDefaults.textFieldColors(
-                containerColor = Color.White,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent
-            ),
-            keyboardOptions = KeyboardOptions.Default.copy(
-                capitalization = KeyboardCapitalization.Words
-            )
         )
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -562,8 +554,3 @@ fun MessageCard(message: Message, isCurrentUser: Boolean) {
         }
     }
 }
-
-//@Preview
-//@Composable
-//fun SimpleComposablePreview() {
-//}
