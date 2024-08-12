@@ -568,6 +568,3 @@ fun MessageCard(message: Message, isCurrentUser: Boolean) {
 //@Composable
 //fun SimpleComposablePreview() {
 //}
-
-
-
