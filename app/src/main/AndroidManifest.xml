@@ -13,9 +13,9 @@
         android:theme="@style/Theme.Yestion">
 
 
-        <activity android:name="com.lastbullet.Yestion.Login"/>
+        <activity android:name="com.lastbullet.yestion.Chat"/>
         <activity android:name=".MainActivitybak"/>
-        <activity android:name="com.lastbullet.yestion.Chat"
+        <activity android:name="com.lastbullet.yestion.LobbyActivity"
             android:exported="true">
 
             <intent-filter>

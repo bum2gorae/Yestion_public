@@ -64,7 +64,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
@@ -91,14 +90,14 @@ class Chat : ComponentActivity() {
         }
         setContent {
             YestionTheme {
-                MainScreen()
+                ChatMainScreen()
             }
         }
     }
 }
 
 @Composable
-fun MainScreen() {
+fun ChatMainScreen() {
     var selectedRoom by remember { mutableStateOf<ChatRoom?>(null) }
     var nickname by rememberSaveable { mutableStateOf<String?>(null) }
 
@@ -563,3 +562,8 @@ fun MessageCard(message: Message, isCurrentUser: Boolean) {
         }
     }
 }
+
+//@Preview
+//@Composable
+//fun SimpleComposablePreview() {
+//}
