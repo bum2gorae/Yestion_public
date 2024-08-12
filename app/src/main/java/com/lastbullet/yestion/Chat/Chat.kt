@@ -563,8 +563,3 @@ fun MessageCard(message: Message, isCurrentUser: Boolean) {
         }
     }
 }
-
-//@Preview
-//@Composable
-//fun SimpleComposablePreview() {
-//}
