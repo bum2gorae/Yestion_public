@@ -10,6 +10,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -29,6 +30,8 @@ data class OnMovingData(
 
 class ContentViewModel : ViewModel() {
     val contentList = mutableStateListOf<Items>()
+    val contentListState = MutableStateFlow<List<Items>>(emptyList())
+    val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0,0,0))
     val contentListSnapshot = contentList
 
     init {
