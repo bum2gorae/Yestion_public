@@ -56,8 +56,6 @@ fun WorkSpaceScreen(
     var movingOffset by remember { mutableIntStateOf(0) }
     var onMoveToIndex by remember { mutableIntStateOf(0) }
     var onMoveFromIndex by remember { mutableIntStateOf(0) }
-    val contentState = viewModel.contentListState.collectAsState()
-    val onMovingState = viewModel.movingState.collectAsState()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -67,7 +65,7 @@ fun WorkSpaceScreen(
         val yPositionList = mutableSetOf<Float>()
         yPositionList.clear()
         items(
-            contentState.value,
+            viewModel.contentListSnapshot,
             key = { "${it.id}_${it.contents}_${it.sequence}_${it.typeFlag}" }) { it ->
             Log.d("content test", it.toString())
             DraggableItem(

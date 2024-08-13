@@ -31,8 +31,7 @@ data class OnMovingData(
 
 class ContentViewModel : ViewModel() {
     val contentList = mutableStateListOf<Items>()
-    val contentListState = MutableStateFlow<List<Items>>(emptyList())
-    val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0,0,0))
+    val contentListSnapshot = contentList
 
     init {
         firebaseInit()
@@ -40,9 +39,6 @@ class ContentViewModel : ViewModel() {
 
     fun addContent(item: Items) {
         contentList.add(item)
-        val updatedList = contentListState.value.toMutableList()
-        updatedList.add(item)
-        contentListState.value =updatedList
     }
 
     fun removeContent(item: Items) {
@@ -112,8 +108,6 @@ class ContentViewModel : ViewModel() {
                     val decimalValue = formattedDateTime.toLong()
                     val uniqueKey = get62Code(decimalValue)
                     contentList.clear()
-                    contentListState.value = emptyList()
-                    val updatedList = contentListState.value.toMutableList()
                     var count = 1
                     Log.d("Firebase", "Data change detected: $snapshot")
 
@@ -127,19 +121,12 @@ class ContentViewModel : ViewModel() {
                                     it.child("sequence").getValue(Int::class.java) ?: 0
                                 )
                             )
-                            updatedList.add(Items(
-                                it.child("id").value.toString(),
-                                it.child("contents").value.toString(),
-                                it.child("typeFlag").value.toString(),
-                                it.child("sequence").getValue(Int::class.java) ?: 0
-                            ))
                             count++
                         }
                     } else {
                         addContent(Items("test", "", "title", 1))
                     }
 
-                    contentListState.value =updatedList
                     sortList()
                     val maxSequence = getMaxSequence()
                     // 마지막 아이템의 contents가 비어있지 않은 경우, 새로운 빈 아이템 추가
@@ -164,11 +151,8 @@ class ContentViewModel : ViewModel() {
 
     fun sortList() {
         val sortedList = contentList.sortedWith(compareBy { it.sequence })
-        val sortedState = contentListState.value.sortedWith(compareBy { it.sequence })
         contentList.clear()
         contentList.addAll(sortedList)
-        contentListState.value = emptyList()
-        contentListState.value = sortedState
     }
 
     fun updateFirebase(
@@ -198,18 +182,15 @@ class ContentViewModel : ViewModel() {
             fromIndex==toIndex -> return
             fromIndex>toIndex -> fromIndex.let { highIndex ->
                 for (i in toIndex..highIndex) {
-                    contentListState.value[i].sequence += 1
                     contentList[i].sequence += 1
                 }
             }
             fromIndex<toIndex -> fromIndex.let { lowIndex ->
                 for (i in lowIndex..toIndex) {
-                    contentListState.value[i].sequence -= 1
                     contentList[i].sequence -= 1
                 }
             }
         }
-        val stateItem = contentListState.value[fromIndex]
 
         val item = contentList[fromIndex]
         contentList.removeAt(fromIndex)
