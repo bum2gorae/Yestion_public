@@ -10,6 +10,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.database
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -28,7 +29,10 @@ data class OnMovingData(
 )
 
 class ContentViewModel : ViewModel() {
+    val firebaseUrl = "https://sparta-f5aee-default-rtdb.asia-southeast1.firebasedatabase.app/"
     val contentList = mutableStateListOf<Items>()
+    val contentListState = MutableStateFlow<List<Items>>(emptyList())
+    val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0,0,0))
     val contentListSnapshot = contentList
 
     init {
@@ -41,7 +45,7 @@ class ContentViewModel : ViewModel() {
 
     fun removeContent(item: Items) {
         val fireRealTimeDatabase =
-            Firebase.database("https://orcaprj-3518d-default-rtdb.asia-southeast1.firebasedatabase.app/")
+            Firebase.database(firebaseUrl)
         val workspaceDB = fireRealTimeDatabase.getReference("workspace")
         contentList.remove(item)
         contentList.forEach {
@@ -93,7 +97,7 @@ class ContentViewModel : ViewModel() {
     private fun firebaseInit() {
         // FireBase RealTime Database 초기화
         val fireRealTimeDatabase =
-            Firebase.database("https://orcaprj-3518d-default-rtdb.asia-southeast1.firebasedatabase.app/")
+            Firebase.database(firebaseUrl)
         val workspaceDB = fireRealTimeDatabase.getReference("workspace")
 
         // 데이터베이스 리스너 등록 (UI 스레드에서 실행)
@@ -160,7 +164,7 @@ class ContentViewModel : ViewModel() {
         sequence: Int
     ) {
         val fireRealTimeDatabase =
-            Firebase.database("https://orcaprj-3518d-default-rtdb.asia-southeast1.firebasedatabase.app/")
+            Firebase.database(firebaseUrl)
         val workspaceDB = fireRealTimeDatabase.getReference("workspace")
         val updates = mapOf(
             "id" to id,

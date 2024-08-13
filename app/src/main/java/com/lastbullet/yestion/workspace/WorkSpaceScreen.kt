@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import com.example.yestion_ms.R
 import kotlin.math.roundToInt
 
 
