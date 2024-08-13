@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.generativeai)
+    implementation(libs.androidx.appcompat)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -79,7 +80,7 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:32.3.1"))
     implementation ("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-auth-ktx:23.0.0")
-    implementation ("com.google.firebase:firebase-storage")
+    
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     implementation("androidx.compose.material3:material3:1.2.1")
