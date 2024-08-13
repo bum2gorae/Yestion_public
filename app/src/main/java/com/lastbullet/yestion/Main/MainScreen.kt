@@ -1,7 +1,10 @@
 package com.lastbullet.yestion
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -36,11 +39,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +56,7 @@ class MainScreen : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MainScreenComponent()
+
         }
     }
 }
@@ -59,6 +64,13 @@ class MainScreen : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenComponent() {
+    val imageUri = remember { mutableStateOf<Uri?>(null) }
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri.value = uri
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -71,7 +83,9 @@ fun MainScreenComponent() {
                     }
                 },
                 actions = {
-                    IconButton(onClick = { /* TODO: 프로필 아이콘 클릭 시 동작 */ }) {
+                    IconButton(onClick = {
+                        launcher.launch("image/*") // 갤러리에서 이미지를 선택하는 인텐트를 실행
+                    }) {
                         Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
                     }
                 },
@@ -114,8 +128,16 @@ fun MainScreenComponent() {
                         .clip(CircleShape)
                         .background(Color(0xFFD1C4E9))
                 ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.ic_launcher_background),
+                    imageUri.value?.let { uri ->
+                        Image(
+                            painter = rememberImagePainter(uri),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(80.dp)
+                                .clip(CircleShape)
+                        )
+                    } ?: Image(
+                        painter = rememberImagePainter(R.drawable.ic_launcher_background),
                         contentDescription = null,
                         modifier = Modifier
                             .size(80.dp)
@@ -126,19 +148,16 @@ fun MainScreenComponent() {
                     modifier = Modifier
                         .height(80.dp)
                         .fillMaxWidth()
-                ){
+                ) {
                     Text(
                         text = "안드로이드",
                         fontSize = 30.sp,
-                        modifier = Modifier.
-                        align(Alignment.CenterStart)
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
                             .padding(start = 20.dp)
-
                     )
                 }
             }
-            // 아바타 섹션
-
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -204,6 +223,9 @@ fun FeatureCard(title: String, description: String) {
     }
 }
 
+
+
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewMainScreen() {
@@ -216,4 +238,3 @@ fun PreviewFeatureCard() {
     FeatureCard(title = "노트", description = "This is a subhead")
 }
 //
-

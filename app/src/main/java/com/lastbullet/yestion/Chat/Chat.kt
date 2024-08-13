@@ -554,4 +554,3 @@ fun MessageCard(message: Message, isCurrentUser: Boolean) {
         }
     }
 }
-//
