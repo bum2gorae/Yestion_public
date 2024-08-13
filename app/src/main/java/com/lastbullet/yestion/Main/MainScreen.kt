@@ -207,7 +207,7 @@ fun FeatureCard(title: String, description: String) {
 @Preview(showBackground = true)
 @Composable
 fun PreviewMainScreen() {
-    MainScreen()
+    MainScreenComponent()
 }
 
 @Preview(showBackground = true)
@@ -215,5 +215,5 @@ fun PreviewMainScreen() {
 fun PreviewFeatureCard() {
     FeatureCard(title = "노트", description = "This is a subhead")
 }
-
+//
 
