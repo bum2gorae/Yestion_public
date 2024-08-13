@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -65,17 +66,18 @@ import com.google.ai.client.generativeai.Chat
 import kotlinx.coroutines.launch
 
 class MainScreen : ComponentActivity() {
+    private val workSpaceViewModel: ContentViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MainScreenComponent()
+            MainScreenComponent(workSpaceViewModel)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreenComponent() {
+fun MainScreenComponent(workSpaceViewModel: ContentViewModel) {
     val navController = rememberNavController()
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
@@ -175,7 +177,7 @@ fun MainScreenComponent() {
             ) {
                 composable("home") { HomeScreen(imageUri.value) }
                 composable("chat") { ChatMainScreen() }  // "chat" 경로 추가
-                composable("note") { NoteScreen() }
+                composable("note") { WorkSpaceScreen(workSpaceViewModel) }
             }
         }
     }
@@ -308,11 +310,11 @@ fun FeatureCard(title: String, description: String, imageRes: Int) {
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewMainScreen() {
-    MainScreenComponent()
-}
+//@Preview(showBackground = true)
+//@Composable
+//fun PreviewMainScreen() {
+//    MainScreenComponent()
+//}
 
 @Preview(showBackground = true)
 @Composable
