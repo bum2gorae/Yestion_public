@@ -24,16 +24,16 @@ data class Items(
 
 data class OnMovingData(
     //drag용 data class
-    var onMoveFromIndex : Int, //drag시작 index
-    var onMoveToIndex : Int, //drag목표 index
-    var movingOffset : Int, //drag의 영향을 받는 블럭들의 offset
+    var onMoveFromIndex: Int, //drag시작 index
+    var onMoveToIndex: Int, //drag목표 index
+    var movingOffset: Int, //drag의 영향을 받는 블럭들의 offset
 )
 
 class ContentViewModel : ViewModel() {
     val firebaseUrl = "https://sparta-f5aee-default-rtdb.asia-southeast1.firebasedatabase.app/"
     val contentList = mutableStateListOf<Items>()
     val contentListState = MutableStateFlow<List<Items>>(emptyList())
-    val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0,0,0))
+    val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0, 0, 0))
 
     init {
         firebaseInit()
@@ -43,7 +43,7 @@ class ContentViewModel : ViewModel() {
         contentList.add(item)
         val updatedList = contentListState.value.toMutableList()
         updatedList.add(item)
-        contentListState.value =updatedList
+        contentListState.value = updatedList
     }
 
     fun removeContent(item: Items) {
@@ -54,37 +54,38 @@ class ContentViewModel : ViewModel() {
 
         val updatedList = contentListState.value.toMutableList()
         updatedList.remove(item)
-        contentListState.value =updatedList
+        contentListState.value = updatedList
 
         contentList.forEach {
-            Log.d("remove test",it.toString())
+            Log.d("remove test", it.toString())
         }
         // id 필드가 itemId와 일치하는 데이터를 검색
-        workspaceDB.orderByChild("id").equalTo(item.id).addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                for (snapshot in dataSnapshot.children) {
-                    // 검색된 데이터 삭제
-                    snapshot.ref.removeValue().addOnSuccessListener {
-                        Log.d("Firebase", "Item with id ${item.id} removed successfully")
-                    }.addOnFailureListener { exception ->
-                        Log.d("Firebase", "Failed to remove item: ${exception.message}")
+        workspaceDB.orderByChild("id").equalTo(item.id)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    for (snapshot in dataSnapshot.children) {
+                        // 검색된 데이터 삭제
+                        snapshot.ref.removeValue().addOnSuccessListener {
+                            Log.d("Firebase", "Item with id ${item.id} removed successfully")
+                        }.addOnFailureListener { exception ->
+                            Log.d("Firebase", "Failed to remove item: ${exception.message}")
+                        }
                     }
                 }
-            }
 
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
-            }
-        })
-        if (item.sequence!=contentListState.value.size) {
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
+                }
+            })
+        if (item.sequence != contentListState.value.size) {
             val newList = contentListState.value.toMutableList()
-            for (i in item.sequence-1..<contentListState.value.size) {
+            for (i in item.sequence - 1..<contentListState.value.size) {
                 newList[i] = newList[i].copy(sequence = newList[i].sequence - 1)
                 contentListState.value = newList
             }
         }
-        if (item.sequence!=contentList.size) {
-            for (i in item.sequence-1..<contentList.size) {
+        if (item.sequence != contentList.size) {
+            for (i in item.sequence - 1..<contentList.size) {
                 contentList[i].sequence -= 1
             }
         }
@@ -109,8 +110,35 @@ class ContentViewModel : ViewModel() {
 
 
     fun typeChange(item: Items, toType: String) {
-        item.typeFlag = toType
-        updateSequence()
+        Log.d("typeChangeTest", item.toString())
+        val updatedList = contentListState.value.toMutableList()
+        val index = updatedList.indexOf(item)
+        val updateItem = item.copy(typeFlag = toType)
+        val fireRealTimeDatabase =
+            Firebase.database(firebaseUrl)
+        val workspaceDB = fireRealTimeDatabase.getReference("workspace")
+
+        updatedList[index] = updateItem
+        contentListState.value = updatedList
+
+        workspaceDB.orderByChild("id").equalTo(item.id)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    for (snapshot in dataSnapshot.children) {
+                        // 검색된 데이터 삭제
+                        val updates = mapOf("typeFlag" to toType)
+                        snapshot.ref.updateChildren(updates).addOnSuccessListener {
+                            Log.d("Firebase", "Item with id ${item.id} updated successfully")
+                        }.addOnFailureListener { exception ->
+                            Log.d("Firebase", "Failed to remove item: ${exception.message}")
+                        }
+                    }
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
+                }
+            })
     }
 
     fun getMaxSequence(): Int {
@@ -137,9 +165,19 @@ class ContentViewModel : ViewModel() {
                     var count = 1
                     Log.d("Firebase", "Data change detected: $snapshot")
 
+                    val newList = mutableListOf<Items>()
+
                     if (snapshot.exists()) {
                         snapshot.children.forEach { it ->
                             contentList.add(
+                                Items(
+                                    it.child("id").value.toString(),
+                                    it.child("contents").value.toString(),
+                                    it.child("typeFlag").value.toString(),
+                                    it.child("sequence").getValue(Int::class.java) ?: 0
+                                )
+                            )
+                            newList.add(
                                 Items(
                                     it.child("id").value.toString(),
                                     it.child("contents").value.toString(),
@@ -152,6 +190,10 @@ class ContentViewModel : ViewModel() {
                     } else {
                         addContent(Items("test", "", "title", 1))
                     }
+                    newList.forEach {
+                        Log.d("DataListenerCheck", it.toString())
+                    }
+                    contentListState.value = newList
 
                     sortList()
                     val maxSequence = getMaxSequence()
@@ -159,12 +201,23 @@ class ContentViewModel : ViewModel() {
                     if (contentList.isNotEmpty() && contentList.last().contents.isNotEmpty()) {
                         contentList.add(
                             Items(
-                                "test${maxSequence+1}${uniqueKey}",
+                                "test${maxSequence + 1}${uniqueKey}",
                                 "",
                                 "body",
-                                maxSequence+1
+                                maxSequence + 1
                             )
                         )
+                    }
+                    if (contentListState.value.isNotEmpty() && contentListState.value.last().contents.isNotEmpty()) {
+                        newList.add(
+                            Items(
+                                "test${maxSequence + 1}${uniqueKey}",
+                                "",
+                                "body",
+                                maxSequence + 1
+                            )
+                        )
+                        contentListState.value = newList
                     }
                 }
             }
@@ -179,6 +232,8 @@ class ContentViewModel : ViewModel() {
         val sortedList = contentList.sortedWith(compareBy { it.sequence })
         contentList.clear()
         contentList.addAll(sortedList)
+        val sortedListState = contentListState.value.sortedWith(compareBy { it.sequence })
+        contentListState.value = sortedListState
     }
 
     fun updateFirebase(
@@ -204,30 +259,44 @@ class ContentViewModel : ViewModel() {
     }
 
     fun moveItem(fromIndex: Int, toIndex: Int) {
+        val newList = contentListState.value.toMutableList()
         when {
-            fromIndex==toIndex -> return
-            fromIndex>toIndex -> fromIndex.let { highIndex ->
+            fromIndex == toIndex -> return
+            fromIndex > toIndex -> fromIndex.let { highIndex ->
                 for (i in toIndex..highIndex) {
                     contentList[i].sequence += 1
+                    newList[i] = newList[i].copy(sequence = newList[i].sequence + 1)
+                    contentListState.value = newList
                 }
             }
-            fromIndex<toIndex -> fromIndex.let { lowIndex ->
+            fromIndex < toIndex -> fromIndex.let { lowIndex ->
                 for (i in lowIndex..toIndex) {
                     contentList[i].sequence -= 1
+                    newList[i] = newList[i].copy(sequence = newList[i].sequence - 1)
+                    contentListState.value = newList
                 }
             }
         }
 
         val item = contentList[fromIndex]
+        val itemState = contentListState.value[fromIndex]
+        newList.removeAt(fromIndex)
+        newList.add(toIndex, itemState)
+        newList[toIndex].sequence = toIndex+1
+        contentListState.value = newList
+
         contentList.removeAt(fromIndex)
         contentList.add(toIndex, item)
-        contentList[toIndex].sequence = toIndex+1
+        contentList[toIndex].sequence = toIndex + 1
         sortList()
-        updateSequence()
+        updateSequence(newList)
     }
 
-    private fun updateSequence() {
-        contentList.forEach { item ->
+    private fun updateSequence(updateList: MutableList<Items>) {
+//        contentList.forEach { item ->
+//            updateFirebase(item.id, item.contents, item.typeFlag, item.sequence)
+//        }
+        updateList.forEach { item ->
             updateFirebase(item.id, item.contents, item.typeFlag, item.sequence)
         }
     }
