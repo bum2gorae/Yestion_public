@@ -23,9 +23,10 @@ data class Items(
 )
 
 data class OnMovingData(
-    var onMoveFromIndex : Int,
-    var onMoveToIndex : Int,
-    var movingOffset : Int,
+    //drag용 data class
+    var onMoveFromIndex : Int, //drag시작 index
+    var onMoveToIndex : Int, //drag목표 index
+    var movingOffset : Int, //drag의 영향을 받는 블럭들의 offset
 )
 
 class ContentViewModel : ViewModel() {
@@ -33,7 +34,6 @@ class ContentViewModel : ViewModel() {
     val contentList = mutableStateListOf<Items>()
     val contentListState = MutableStateFlow<List<Items>>(emptyList())
     val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0,0,0))
-    val contentListSnapshot = contentList
 
     init {
         firebaseInit()
@@ -41,6 +41,9 @@ class ContentViewModel : ViewModel() {
 
     fun addContent(item: Items) {
         contentList.add(item)
+        val updatedList = contentListState.value.toMutableList()
+        updatedList.add(item)
+        contentListState.value =updatedList
     }
 
     fun removeContent(item: Items) {
@@ -48,6 +51,11 @@ class ContentViewModel : ViewModel() {
             Firebase.database(firebaseUrl)
         val workspaceDB = fireRealTimeDatabase.getReference("workspace")
         contentList.remove(item)
+
+        val updatedList = contentListState.value.toMutableList()
+        updatedList.remove(item)
+        contentListState.value =updatedList
+
         contentList.forEach {
             Log.d("remove test",it.toString())
         }
@@ -68,13 +76,20 @@ class ContentViewModel : ViewModel() {
                 Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
             }
         })
+        if (item.sequence!=contentListState.value.size) {
+            val newList = contentListState.value.toMutableList()
+            for (i in item.sequence-1..<contentListState.value.size) {
+                newList[i] = newList[i].copy(sequence = newList[i].sequence - 1)
+                contentListState.value = newList
+            }
+        }
         if (item.sequence!=contentList.size) {
             for (i in item.sequence-1..<contentList.size) {
                 contentList[i].sequence -= 1
             }
         }
         sortList()
-        contentList.forEach { it ->
+        contentListState.value.forEach {
             updateFirebase(
                 it.id,
                 it.contents,
@@ -82,6 +97,14 @@ class ContentViewModel : ViewModel() {
                 it.sequence
             )
         }
+//        contentList.forEach { it ->
+//            updateFirebase(
+//                it.id,
+//                it.contents,
+//                it.typeFlag,
+//                it.sequence
+//            )
+//        }
     }
 
 
@@ -91,7 +114,8 @@ class ContentViewModel : ViewModel() {
     }
 
     fun getMaxSequence(): Int {
-        return contentList.maxOfOrNull { it.sequence } ?: 0
+        return contentListState.value.maxOfOrNull { it.sequence } ?: 0
+//        return contentList.maxOfOrNull { it.sequence } ?: 0
     }
 
     private fun firebaseInit() {

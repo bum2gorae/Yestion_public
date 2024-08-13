@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -55,6 +56,8 @@ fun WorkSpaceScreen(
     var movingOffset by remember { mutableIntStateOf(0) }
     var onMoveToIndex by remember { mutableIntStateOf(0) }
     var onMoveFromIndex by remember { mutableIntStateOf(0) }
+    val contentState = viewModel.contentListState.collectAsState()
+    val onMovingState = viewModel.movingState.collectAsState()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -64,7 +67,7 @@ fun WorkSpaceScreen(
         val yPositionList = mutableSetOf<Float>()
         yPositionList.clear()
         items(
-            viewModel.contentListSnapshot,
+            contentState.value,
             key = { "${it.id}_${it.contents}_${it.sequence}_${it.typeFlag}" }) { it ->
             Log.d("content test", it.toString())
             DraggableItem(
