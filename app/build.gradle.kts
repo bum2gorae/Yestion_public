@@ -65,7 +65,6 @@ dependencies {
     implementation(libs.firebase.storage.ktx)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.generativeai)
-    implementation(libs.androidx.appcompat)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.database.ktx)
     testImplementation(libs.junit)
