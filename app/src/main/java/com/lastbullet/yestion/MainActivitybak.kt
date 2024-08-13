@@ -20,7 +20,7 @@ import com.lastbullet.yestion.ui.theme.YestionTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-class MainActivity : ComponentActivity() {
+class MainActivitybak : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -100,6 +100,7 @@ fun Greeting(context : Context) {
 @Composable
 fun GreetingPreview() {
     YestionTheme {
-        Greeting(MainActivity())
+        Greeting(Chat())
     }
 }
+//
