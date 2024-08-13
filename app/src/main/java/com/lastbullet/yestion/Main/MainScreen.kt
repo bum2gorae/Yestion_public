@@ -237,4 +237,3 @@ fun PreviewMainScreen() {
 fun PreviewFeatureCard() {
     FeatureCard(title = "노트", description = "This is a subhead")
 }
-//
