@@ -56,9 +56,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil.compose.rememberAsyncImagePainter
+import com.google.ai.client.generativeai.Chat
 import kotlinx.coroutines.launch
-import okhttp3.internal.notify
 
 class MainScreen : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,6 +76,7 @@ class MainScreen : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreenComponent() {
+    val navController = rememberNavController()
     val imageUri = remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
@@ -93,7 +98,7 @@ fun MainScreenComponent() {
                     label = { Text("프로필 바꾸기") },
                     selected = false,
                     onClick = {
-                        launcher.launch("image/*") // 갤러리에서 이미지를 선택하는 인텐트를 실행
+                        launcher.launch("image/*")
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -101,7 +106,7 @@ fun MainScreenComponent() {
                     label = { Text("채팅방") },
                     selected = false,
                     onClick = {
-                        // TODO: 채팅방 클릭 시 동작 추가
+                        navController.navigate("chat")  // "chat" 경로로 이동
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -109,7 +114,7 @@ fun MainScreenComponent() {
                     label = { Text("노트") },
                     selected = false,
                     onClick = {
-                        // TODO: 노트 클릭 시 동작 추가
+                        navController.navigate("note")  // "note" 경로로 이동
                         scope.launch { drawerState.close() }
                     }
                 )
@@ -125,7 +130,7 @@ fun MainScreenComponent() {
                     navigationIcon = {
                         IconButton(onClick = {
                             scope.launch {
-                                drawerState.open() // 드로어 열기
+                                drawerState.open()  // 드로어 열기
                             }
                         }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menu")
@@ -133,7 +138,7 @@ fun MainScreenComponent() {
                     },
                     actions = {
                         IconButton(onClick = {
-                            launcher.launch("image/*") // 갤러리에서 이미지를 선택하는 인텐트를 실행
+                            launcher.launch("image/*")  // 갤러리에서 이미지를 선택하는 인텐트 실행
                         }) {
                             Icon(Icons.Default.AccountCircle, contentDescription = "Profile")
                         }
@@ -163,67 +168,88 @@ fun MainScreenComponent() {
                 }
             }
         ) { padding ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.Start
+            NavHost(
+                navController = navController,
+                startDestination = "home",  // 시작 화면
+                modifier = Modifier.padding(padding)
             ) {
-                Row {
-                    Box(
-                        modifier = Modifier
-                            .size(80.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xFFD1C4E9))
-                    ) {
-                        imageUri.value?.let { uri ->
-                            Image(
-                                painter = rememberAsyncImagePainter(uri),
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(CircleShape)
-                            )
-                        } ?: Image(
-                            painter = rememberAsyncImagePainter(R.drawable.ic_launcher_background),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(80.dp)
-                                .clip(CircleShape)
-                        )
-                    }
-                    Box(
-                        modifier = Modifier
-                            .height(80.dp)
-                            .fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "안드로이드",
-                            fontSize = 30.sp,
-                            modifier = Modifier
-                                .align(Alignment.CenterStart)
-                                .padding(start = 20.dp)
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // 가로 카드 섹션
-                FeatureCard(
-                    title = "노트",
-                    description = "",
-                    imageRes = R.drawable.ic_launcher_background // 적절한 이미지 리소스를 사용하세요
-                )
-                FeatureCard(
-                    title = "채팅방",
-                    description = "Subhead",
-                    imageRes = R.drawable.ic_launcher_background // 적절한 이미지 리소스를 사용하세요
-                )
+                composable("home") { HomeScreen(imageUri.value) }
+                composable("chat") { ChatMainScreen() }  // "chat" 경로 추가
+                composable("note") { NoteScreen() }
             }
         }
     }
+}
+
+@Composable
+fun HomeScreen(imageUri: Uri?) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.Start
+    ) {
+        Row {
+            Box(
+                modifier = Modifier
+                    .size(80.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFFD1C4E9))
+            ) {
+                imageUri?.let { uri ->
+                    Image(
+                        painter = rememberAsyncImagePainter(uri),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(80.dp)
+                            .clip(CircleShape)
+                    )
+                } ?: Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_background),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(80.dp)
+                        .clip(CircleShape)
+                )
+            }
+            Box(
+                modifier = Modifier
+                    .height(80.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = "안드로이드",
+                    fontSize = 30.sp,
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .padding(start = 20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        FeatureCard(
+            title = "노트",
+            description = "",
+            imageRes = R.drawable.ic_launcher_background
+        )
+        FeatureCard(
+            title = "채팅방",
+            description = "Subhead",
+            imageRes = R.drawable.ic_launcher_background
+        )
+    }
+}
+
+@Composable
+fun ChatScreen() {
+    // TODO: 채팅방 화면 UI 구현
+}
+
+@Composable
+fun NoteScreen() {
+    // TODO: 노트 화면 UI 구현
 }
 
 @Composable
@@ -265,7 +291,6 @@ fun FeatureCard(title: String, description: String, imageRes: Int) {
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            // 추가 아이콘 버튼 섹션
             Box(
                 modifier = Modifier
                     .size(40.dp)
@@ -295,6 +320,6 @@ fun PreviewFeatureCard() {
     FeatureCard(
         title = "노트",
         description = "This is a subhead",
-        imageRes = R.drawable.ic_launcher_background // 적절한 이미지 리소스를 사용하세요
+        imageRes = R.drawable.ic_launcher_background
     )
 }
