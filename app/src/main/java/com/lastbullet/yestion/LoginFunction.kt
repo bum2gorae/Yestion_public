@@ -40,3 +40,4 @@ class LoginFunction {
         database.child("userinfo").push().setValue(userInfo)
     }
 }
+//
