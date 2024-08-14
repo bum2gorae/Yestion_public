@@ -7,6 +7,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -20,7 +23,7 @@ import com.lastbullet.yestion.R
 fun DragIcon(
     viewModel: ContentViewModel,
     item: Items,
-    yPosition: Float,
+    yPositionInit: Float,
     height: Int,
     onDragStateChange: (Boolean) -> Unit,
     onOffsetReset: () -> Unit,
@@ -28,6 +31,7 @@ fun DragIcon(
     val movingViewModelState by viewModel.movingState.collectAsState()
     val movingViewModel = viewModel.movingState
     val maxSequence = viewModel.getMaxSequence()
+    var yPosition by remember { mutableFloatStateOf(yPositionInit) }
     Icon(
         imageVector = ImageVector.vectorResource(id = R.drawable.ic_drag_handle),
         contentDescription = null,
@@ -61,6 +65,7 @@ fun DragIcon(
                         onOffsetReset()
                     },
                     onDrag = { change, dragAmount ->
+                        yPosition += dragAmount.y
                         onOffsetChange(dragAmount.y)
                         change.consume()
                         var tempToIndex = 0
@@ -83,6 +88,7 @@ fun DragIcon(
                                 else -> 0
                             }
                         )
+                        Log.d("heightCheck", viewModel.movingState.value.movingOffset.toString())
                     }
                 )
             }

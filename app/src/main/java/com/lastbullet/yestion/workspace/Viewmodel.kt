@@ -279,6 +279,7 @@ class ContentViewModel : ViewModel() {
         contentListState.value = newList
         updateSequence(newList)
         sequenceChange(itemState, toIndex+1)
+        movingState.value.yPositionList = emptySet()
     }
 
     //고유 key생성 로직
