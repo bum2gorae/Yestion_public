@@ -220,14 +220,13 @@ class ContentViewModel : ViewModel() {
             when {
                 this == toIndex -> return
                 this > toIndex -> {
-                    for (i in toIndex..this) {
-//                        contentList[i].sequence += 1
+                    for (i in toIndex until this) {
                         newList[i] = newList[i].copy(sequence = newList[i].sequence + 1)
                         contentListState.value = newList
                     }
                 }
                 this < toIndex -> {
-                    for (i in this..toIndex) {
+                    for (i in this+1..toIndex) {
                         newList[i] = newList[i].copy(sequence = newList[i].sequence - 1)
                         contentListState.value = newList
                     }
@@ -253,5 +252,11 @@ class ContentViewModel : ViewModel() {
             number /= 62
         }
         return result
+    }
+
+    fun toIndexUpdate(newIndex: Int) {
+        movingState.value = movingState.value.copy(
+            onMoveToIndex = newIndex
+        )
     }
 }

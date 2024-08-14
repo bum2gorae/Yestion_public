@@ -21,6 +21,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -46,7 +48,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import com.lastbullet.yestion.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlin.math.roundToInt
 
 
@@ -54,12 +57,10 @@ import kotlin.math.roundToInt
 fun WorkSpaceScreen(
     viewModel: ContentViewModel
 ) {
-    var movingOffset by remember { mutableIntStateOf(0) }
-    var onMoveToIndex by remember { mutableIntStateOf(0) }
-    var onMoveFromIndex by remember { mutableIntStateOf(0) }
     val contentState = viewModel.contentListState.collectAsState()
     val onMovingState = viewModel.movingState.collectAsState()
-    onMovingState.value.yPositionList = emptySet()
+    var isDragging by remember { mutableStateOf(false) }
+    Log.d("movingOffsetCheck", onMovingState.value.movingOffset.toString())
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -70,30 +71,11 @@ fun WorkSpaceScreen(
         yPositionList.clear()
         items(
             contentState.value,
-            key = { "${it.id}_${it.contents}_${it.sequence}_${it.typeFlag}" }) { it ->
+            key = { "${it.id}_${it.contents}_${it.sequence}_${it.typeFlag}_${isDragging}" }) { it ->
             Log.d("content test", it.toString())
             DraggableItem(
                 viewModel = viewModel,
                 item = it,
-                onMove = { yPosition, fromIndex, height ->
-                    Log.d("fromIndex",fromIndex.toString())
-                    var toIndex = 0
-                    for ((index, value) in yPositionList.withIndex()) {
-                        if (yPosition > value) {
-                            toIndex = index
-                            Log.d("index change", toIndex.toString())
-                        } else {
-                            break
-                        }
-                    }
-                    movingOffset = when {
-                        onMoveToIndex > onMoveFromIndex -> -height
-                        onMoveToIndex < onMoveFromIndex -> height
-                        else -> 0
-                    }
-                    onMoveToIndex = toIndex
-                    onMoveFromIndex = fromIndex
-                },
                 onDragEnd = { yPosition, fromIndex ->
                     var toIndex = 0
                     for ((index, value) in yPositionList.withIndex()) {
@@ -106,22 +88,11 @@ fun WorkSpaceScreen(
                             break
                         }
                     }
-                    movingOffset = 0
+                    viewModel.movingState.value.movingOffset = 0
                     yPositionList.clear()
+                    viewModel.movingState.value.yPositionList = emptySet()
                     viewModel.moveItem(fromIndex, toIndex)
-                },
-                onFocusLost = { changedText ->
-                    val newItem = Items(
-                        it.id,
-                        changedText,
-                        it.typeFlag,
-                        if (it.sequence > 0) it.sequence else maxSequence + 1
-                    )
-                    viewModel.updateFirebase(newItem)
-                },
-                movingOffset,
-                onMoveToIndex,
-                onMoveFromIndex
+                }
             )
         }
     }
@@ -131,13 +102,11 @@ fun WorkSpaceScreen(
 fun DraggableItem(
     viewModel: ContentViewModel,
     item: Items,
-    onMove: (Float, Int, Int) -> Unit,
-    onDragEnd: (Float, Int) -> Unit,
-    onFocusLost: (String) -> Unit,
-    movingOffset: Int,
-    onMoveToIndex: Int,
-    onMoveFromIndex: Int
+    onDragEnd: (Float, Int) -> Unit
 ) {
+    val contentViewModelStateValue = viewModel.contentListState.value
+    val movingViewModelStateValue by viewModel.movingState.collectAsState()
+    val movingViewModel = viewModel.movingState
     var offsetY by remember { mutableFloatStateOf(0f) }
     val zIndex = if (offsetY != 0f) 1f else 0f
     var isDragging by remember { mutableStateOf(false) }
@@ -145,14 +114,15 @@ fun DraggableItem(
     var height by remember { mutableIntStateOf(0) }
     var isFocused by remember { mutableStateOf(false) }
 
-    var highIndex = onMoveToIndex
-    var lowIndex = onMoveToIndex
-    if (onMoveToIndex > onMoveFromIndex) {
-        lowIndex = onMoveFromIndex + 1
-        highIndex += 1
-    } else highIndex = onMoveFromIndex
-
-    val tempYpositionList = mutableSetOf<Float>()
+    val highIndex =
+        if (movingViewModelStateValue.onMoveToIndex > movingViewModelStateValue.onMoveFromIndex) {
+            movingViewModelStateValue.onMoveToIndex + 1
+        } else movingViewModelStateValue.onMoveFromIndex
+    val lowIndex =
+        if (movingViewModelStateValue.onMoveToIndex > movingViewModelStateValue.onMoveFromIndex) {
+            movingViewModelStateValue.onMoveFromIndex + 1
+        } else movingViewModelStateValue.onMoveToIndex
+    val maxSequence = viewModel.getMaxSequence()
 
     val modifier = Modifier
         .background(color = Color.Transparent)
@@ -160,16 +130,23 @@ fun DraggableItem(
         .offset {
             IntOffset(
                 0, offsetY.roundToInt() +
-                        if (item.sequence in (lowIndex + 1)..highIndex) movingOffset else 0
+                        if (item.sequence - 1 in lowIndex until highIndex) {
+                            movingViewModelStateValue.movingOffset
+                        } else 0
             )
         }
         .zIndex(zIndex)
         .border(width = 2.dp, color = if (isDragging) Color.Cyan else Color.Transparent)
         .onGloballyPositioned { layoutCoordinates ->
             yPosition = layoutCoordinates.positionInWindow().y
+            Log.d("yPositionCheck", yPosition.toString())
             val size: IntSize = layoutCoordinates.size
             height = size.height
-            if (!isDragging) tempYpositionList.add(yPosition)
+            val centerPosition = yPosition + (height / 2)
+            if (!isDragging) movingViewModel.value = movingViewModel.value.copy(
+                yPositionList = movingViewModel.value.yPositionList + centerPosition
+            )
+            Log.d("yPositionListCheck1", movingViewModelStateValue.yPositionList.toString())
         }
 
     Box(
@@ -185,10 +162,26 @@ fun DraggableItem(
             var isMenuToggled by remember { mutableStateOf(false) }
             when (item.typeFlag) {
                 "title" -> isFocused = titleBox(input = item.contents,
-                    onFocusLost = { changedText -> onFocusLost(changedText) })
+                    onFocusLost = { changedText ->
+                        val newItem = Items(
+                            item.id,
+                            changedText,
+                            item.typeFlag,
+                            if (item.sequence > 0) item.sequence else maxSequence + 1
+                        )
+                        viewModel.updateFirebase(newItem)
+                    })
 
                 "body" -> isFocused = bodyBox(input = item.contents,
-                    onFocusLost = { changedText -> onFocusLost(changedText) })
+                    onFocusLost = { changedText ->
+                        val newItem = Items(
+                            item.id,
+                            changedText,
+                            item.typeFlag,
+                            if (item.sequence > 0) item.sequence else maxSequence + 1
+                        )
+                        viewModel.updateFirebase(newItem)
+                    })
             }
             if (isFocused) {
                 Box(
@@ -216,7 +209,12 @@ fun DraggableItem(
                     ) {
                         FloatingMenu(
                             onDeleteOption = { viewModel.removeContent(item) },
-                            onTypeChangeOption = { viewModel.typeChange(item, if (item.typeFlag=="body") "title" else "body") }
+                            onTypeChangeOption = {
+                                viewModel.typeChange(
+                                    item,
+                                    if (item.typeFlag == "body") "title" else "body"
+                                )
+                            }
                         )
                     }
                 }
@@ -233,7 +231,7 @@ fun DraggableItem(
                                 },
                                 onDragEnd = {
                                     isDragging = false
-                                    onDragEnd(yPosition, item.sequence - 1)
+//                                    onDragEnd(yPosition, item.sequence - 1)
                                     offsetY = 0f
                                 },
                                 onDragCancel = {
@@ -243,9 +241,25 @@ fun DraggableItem(
                                 onDrag = { change, dragAmount ->
                                     offsetY += dragAmount.y
                                     change.consume()
-                                    Log.d("onDrag ID", item.id)
-                                    // 드래그 하는 동안 visualize하기 위한 onMove함수
-                                    onMove(yPosition, item.sequence - 1, height)
+                                    var tempToIndex = 0
+                                    for ((index, value) in movingViewModelStateValue.yPositionList.withIndex()) {
+                                        if (yPosition > value) {
+                                            tempToIndex = index + 1
+                                        } else {
+                                            break
+                                        }
+                                    }
+                                    movingViewModel.value =
+                                        movingViewModel.value.copy(onMoveToIndex = tempToIndex)
+                                    movingViewModel.value =
+                                        movingViewModel.value.copy(onMoveFromIndex = item.sequence - 1)
+                                    movingViewModel.value = movingViewModel.value.copy(
+                                        movingOffset = when {
+                                            movingViewModelStateValue.onMoveToIndex > movingViewModelStateValue.onMoveFromIndex -> -height
+                                            movingViewModelStateValue.onMoveToIndex < movingViewModelStateValue.onMoveFromIndex -> height
+                                            else -> 0
+                                        }
+                                    )
                                 }
                             )
                         }
@@ -256,8 +270,10 @@ fun DraggableItem(
 }
 
 @Composable
-fun FloatingMenu(onDeleteOption: () -> Unit,
-                 onTypeChangeOption: () -> Unit,) {
+fun FloatingMenu(
+    onDeleteOption: () -> Unit,
+    onTypeChangeOption: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .padding(end = 45.dp)
@@ -268,9 +284,12 @@ fun FloatingMenu(onDeleteOption: () -> Unit,
         MenuItem(R.drawable.ic_type_change, { onTypeChangeOption() })
     }
 }
+
 @Composable
-fun MenuItem(imageVector: Int,
-             onTapOptions: () -> Unit) {
+fun MenuItem(
+    imageVector: Int,
+    onTapOptions: () -> Unit
+) {
     Box(
         modifier = Modifier
             .padding(horizontal = 6.dp)
@@ -280,10 +299,9 @@ fun MenuItem(imageVector: Int,
                 }
             }
     ) {
-        Icon(imageVector = ImageVector.vectorResource(id = imageVector) , contentDescription = null)
+        Icon(imageVector = ImageVector.vectorResource(id = imageVector), contentDescription = null)
     }
 }
-
 
 
 @Composable
