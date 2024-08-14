@@ -3,7 +3,6 @@ package com.lastbullet.yestion
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,8 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -48,9 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.coroutineScope
-import kotlin.math.max
+import com.lastbullet.yestion.workspace.DragIcon
+import com.lastbullet.yestion.workspace.bodyBox
+import com.lastbullet.yestion.workspace.titleBox
 import kotlin.math.roundToInt
 
 
@@ -59,13 +56,11 @@ fun WorkSpaceScreen(
     viewModel: ContentViewModel
 ) {
     val contentState = viewModel.contentListState.collectAsState()
-    val onMovingState = viewModel.movingState.collectAsState()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 40.dp, bottom = 40.dp)
     ) {
-        val maxSequence = viewModel.getMaxSequence()
         val yPositionList = mutableSetOf<Float>()
         yPositionList.clear()
         items(
@@ -75,24 +70,7 @@ fun WorkSpaceScreen(
             Log.d("content test", it.toString())
             DraggableItem(
                 viewModel = viewModel,
-                item = it,
-                onDragEnd = { yPosition, fromIndex ->
-                    var toIndex = 0
-                    for ((index, value) in yPositionList.withIndex()) {
-                        Log.d("yPositionList", yPositionList.toString())
-                        Log.d("yPosition", "yPosition:$yPosition index:$index, value:$value")
-                        if (yPosition > value) {
-                            toIndex = index
-                            Log.d("index change", toIndex.toString())
-                        } else {
-                            break
-                        }
-                    }
-                    viewModel.movingState.value.movingOffset = 0
-                    yPositionList.clear()
-                    viewModel.movingState.value.yPositionList = emptySet()
-                    viewModel.moveItem(fromIndex, toIndex)
-                }
+                item = it
             )
         }
     }
@@ -101,12 +79,11 @@ fun WorkSpaceScreen(
 @Composable
 fun DraggableItem(
     viewModel: ContentViewModel,
-    item: Items,
-    onDragEnd: (Float, Int) -> Unit
+    item: Items
 ) {
-    val contentViewModelStateValue = viewModel.contentListState
     val movingViewModelState by viewModel.movingState.collectAsState()
     val movingViewModel = viewModel.movingState
+
     var offsetY by remember { mutableFloatStateOf(0f) }
     val zIndex = if (offsetY != 0f) 1f else 0f
     var isDragging by remember { mutableStateOf(false) }
@@ -122,7 +99,6 @@ fun DraggableItem(
         if (movingViewModelState.onMoveToIndex > movingViewModelState.onMoveFromIndex) {
             movingViewModelState.onMoveFromIndex + 1
         } else movingViewModelState.onMoveToIndex
-    val maxSequence = viewModel.getMaxSequence()
 
     val modifier = Modifier
         .background(color = Color.Transparent)
@@ -161,27 +137,8 @@ fun DraggableItem(
         ) {
             var isMenuToggled by remember { mutableStateOf(false) }
             when (item.typeFlag) {
-                "title" -> isFocused = titleBox(input = item.contents,
-                    onFocusLost = { changedText ->
-                        val newItem = Items(
-                            item.id,
-                            changedText,
-                            item.typeFlag,
-                            if (item.sequence > 0) item.sequence else maxSequence + 1
-                        )
-                        viewModel.updateFirebase(newItem)
-                    })
-
-                "body" -> isFocused = bodyBox(input = item.contents,
-                    onFocusLost = { changedText ->
-                        val newItem = Items(
-                            item.id,
-                            changedText,
-                            item.typeFlag,
-                            if (item.sequence > 0) item.sequence else maxSequence + 1
-                        )
-                        viewModel.updateFirebase(newItem)
-                    })
+                "title" -> isFocused = titleBox(input = item.contents, viewModel, item)
+                "body" -> isFocused = bodyBox(input = item.contents, viewModel, item)
             }
             if (isFocused) {
                 Box(
@@ -218,62 +175,13 @@ fun DraggableItem(
                         )
                     }
                 }
-                Icon(
-                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_drag_handle),
-                    contentDescription = null,
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(5.dp)
-                        .pointerInput(Unit) {
-                            detectDragGestures(
-                                onDragStart = {
-                                    isDragging = true
-                                },
-                                onDragEnd = {
-                                    isDragging = false
-                                    Log.d("toindextest",movingViewModelState.onMoveToIndex.toString())
-                                    viewModel.moveItem(
-                                        fromIndex = movingViewModelState.onMoveFromIndex,
-                                        toIndex = movingViewModelState.onMoveToIndex)
-                                    viewModel.movingState.value = viewModel.movingState.value.copy(
-                                        onMoveToIndex = 0,
-                                        onMoveFromIndex = 0,
-                                        movingOffset = 0,
-                                        yPositionList = emptySet()
-                                    )
-                                    offsetY = 0f
-                                },
-                                onDragCancel = {
-                                    isDragging = false
-                                    offsetY = 0f
-                                },
-                                onDrag = { change, dragAmount ->
-                                    offsetY += dragAmount.y
-                                    change.consume()
-                                    var tempToIndex = 0
-                                    for ((index, value) in movingViewModelState.yPositionList.withIndex()) {
-                                        if (yPosition > value) {
-                                            tempToIndex = index + 1
-                                            Log.d("tempindextest",tempToIndex.toString())
-                                        } else {
-                                            break
-                                        }
-                                    }
-                                    movingViewModel.value =
-                                        movingViewModel.value.copy(onMoveToIndex = tempToIndex.let { if (it>maxSequence) maxSequence-1 else it})
-                                    movingViewModel.value =
-                                        movingViewModel.value.copy(onMoveFromIndex = item.sequence - 1)
-                                    movingViewModel.value = movingViewModel.value.copy(
-                                        movingOffset = when {
-                                            movingViewModelState.onMoveToIndex > movingViewModelState.onMoveFromIndex -> -height
-                                            movingViewModelState.onMoveToIndex < movingViewModelState.onMoveFromIndex -> height
-                                            else -> 0
-                                        }
-                                    )
-                                }
-                            )
-                        }
-                )
+                DragIcon(viewModel,
+                    item,
+                    yPosition,
+                    height,
+                    onDragStateChange = { isDragging = it },
+                    onOffsetReset = {offsetY = 0f},
+                    onOffsetChange = {offsetY = it})
             }
         }
     }
@@ -311,101 +219,6 @@ fun MenuItem(
     ) {
         Icon(imageVector = ImageVector.vectorResource(id = imageVector), contentDescription = null)
     }
-}
-
-
-@Composable
-fun titleBox(
-    input: String,
-    onFocusLost: (String) -> Unit,
-    modifier: Modifier = Modifier
-): Boolean {
-    var title by remember { mutableStateOf(input) }
-    var isFocused by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .wrapContentHeight()
-            .background(color = Color.Transparent),
-        contentAlignment = Alignment.Center
-    )
-    {
-        TextField(
-            value = title,
-            onValueChange = {
-                title = it
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    if (isFocused && !focusState.isFocused && title != "") {
-                        onFocusLost(title)
-                    }
-                    isFocused = focusState.isFocused
-                },
-            placeholder = {
-                Text(
-                    text = "제목 없음",
-                    fontSize = 30.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent
-            ),
-            textStyle = TextStyle(
-                fontSize = 30.sp,
-                fontWeight = FontWeight.Bold
-            )
-        )
-    }
-    return isFocused
-}
-
-@Composable
-fun bodyBox(
-    input: String,
-    onFocusLost: (String) -> Unit,
-    modifier: Modifier = Modifier
-): Boolean {
-    var content by remember { mutableStateOf(input) }
-    var isFocused by remember { mutableStateOf(false) }
-    Box(
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .wrapContentHeight()
-            .background(color = Color.Transparent),
-        contentAlignment = Alignment.Center
-    )
-    {
-        TextField(
-            value = content,
-            onValueChange = {
-                content = it
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    if (isFocused && !focusState.isFocused && content != "") {
-                        onFocusLost(content)
-                    }
-                    isFocused = focusState.isFocused
-                },
-            colors = TextFieldDefaults.colors(
-                unfocusedContainerColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                focusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent
-            ),
-            textStyle = TextStyle(
-                fontSize = 15.sp
-            )
-        )
-    }
-    return isFocused
 }
 
 //@Preview(showBackground = true)
