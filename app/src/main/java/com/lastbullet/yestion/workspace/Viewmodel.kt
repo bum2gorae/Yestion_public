@@ -84,7 +84,6 @@ class ContentViewModel : ViewModel() {
         }
     }
 
-
     fun typeChange(item: Items, toType: String) {
         Log.d("typeChangeTest", item.toString())
         val updatedList = contentListState.value.toMutableList()
@@ -101,8 +100,39 @@ class ContentViewModel : ViewModel() {
             .addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     for (snapshot in dataSnapshot.children) {
-                        // 검색된 데이터 삭제
+                        // 검색된 데이터 업데이트
                         val updates = mapOf("typeFlag" to toType)
+                        snapshot.ref.updateChildren(updates).addOnSuccessListener {
+                            Log.d("Firebase", "Item with id ${item.id} updated successfully")
+                        }.addOnFailureListener { exception ->
+                            Log.d("Firebase", "Failed to remove item: ${exception.message}")
+                        }
+                    }
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.w("Firebase", "loadPost:onCancelled", databaseError.toException())
+                }
+            })
+    }
+
+    fun sequenceChange(item: Items, toSequence: Int) {
+        val updatedList = contentListState.value.toMutableList()
+        val index = updatedList.indexOf(item)
+        val updateItem = item.copy(sequence = toSequence)
+        val fireRealTimeDatabase =
+            Firebase.database(firebaseUrl)
+        val workspaceDB = fireRealTimeDatabase.getReference("workspace")
+
+        updatedList[index] = updateItem
+        contentListState.value = updatedList
+
+        workspaceDB.orderByChild("id").equalTo(item.id)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    for (snapshot in dataSnapshot.children) {
+                        // 검색된 데이터 업데이트
+                        val updates = mapOf("sequence" to toSequence)
                         snapshot.ref.updateChildren(updates).addOnSuccessListener {
                             Log.d("Firebase", "Item with id ${item.id} updated successfully")
                         }.addOnFailureListener { exception ->
@@ -214,6 +244,7 @@ class ContentViewModel : ViewModel() {
 
     fun moveItem(fromIndex: Int, toIndex: Int) {
         val newList = contentListState.value.toMutableList()
+        val itemState = contentListState.value[fromIndex]
 
         // drag에 영향 받는 요소들의 sequence 변경
         fromIndex.apply {
@@ -223,23 +254,28 @@ class ContentViewModel : ViewModel() {
                     for (i in toIndex until this) {
                         newList[i] = newList[i].copy(sequence = newList[i].sequence + 1)
                         contentListState.value = newList
+                        Log.d("movingTest1",newList.toString())
                     }
                 }
                 this < toIndex -> {
-                    for (i in this+1..toIndex) {
+                    for (i in this..toIndex) {
                         newList[i] = newList[i].copy(sequence = newList[i].sequence - 1)
                         contentListState.value = newList
+                        Log.d("movingTest2",newList.toString())
                     }
                 }
             }
         }
-        val itemState = contentListState.value[fromIndex]
+
         newList.removeAt(fromIndex)
         newList.add(toIndex, itemState)
-        newList[toIndex].sequence = toIndex+1
+        Log.d("movingTest3",newList.toString())
+        newList[toIndex].sequence = (toIndex + 1)
+        Log.d("movingTest4",newList.toString())
         contentListState.value = newList
-        sortList()
         updateSequence(newList)
+        sequenceChange(itemState, toIndex+1)
+        sortList()
     }
 
     //고유 key생성 로직
@@ -252,11 +288,5 @@ class ContentViewModel : ViewModel() {
             number /= 62
         }
         return result
-    }
-
-    fun toIndexUpdate(newIndex: Int) {
-        movingState.value = movingState.value.copy(
-            onMoveToIndex = newIndex
-        )
     }
 }

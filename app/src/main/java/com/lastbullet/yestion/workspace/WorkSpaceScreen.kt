@@ -59,8 +59,6 @@ fun WorkSpaceScreen(
 ) {
     val contentState = viewModel.contentListState.collectAsState()
     val onMovingState = viewModel.movingState.collectAsState()
-    var isDragging by remember { mutableStateOf(false) }
-    Log.d("movingOffsetCheck", onMovingState.value.movingOffset.toString())
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -71,7 +69,7 @@ fun WorkSpaceScreen(
         yPositionList.clear()
         items(
             contentState.value,
-            key = { "${it.id}_${it.contents}_${it.sequence}_${it.typeFlag}_${isDragging}" }) { it ->
+            key = { "${it.id}_${it.contents}_${it.sequence}_${it.typeFlag}" }) { it ->
             Log.d("content test", it.toString())
             DraggableItem(
                 viewModel = viewModel,
@@ -104,8 +102,8 @@ fun DraggableItem(
     item: Items,
     onDragEnd: (Float, Int) -> Unit
 ) {
-    val contentViewModelStateValue = viewModel.contentListState.value
-    val movingViewModelStateValue by viewModel.movingState.collectAsState()
+    val contentViewModelStateValue = viewModel.contentListState
+    val movingViewModelState by viewModel.movingState.collectAsState()
     val movingViewModel = viewModel.movingState
     var offsetY by remember { mutableFloatStateOf(0f) }
     val zIndex = if (offsetY != 0f) 1f else 0f
@@ -115,13 +113,13 @@ fun DraggableItem(
     var isFocused by remember { mutableStateOf(false) }
 
     val highIndex =
-        if (movingViewModelStateValue.onMoveToIndex > movingViewModelStateValue.onMoveFromIndex) {
-            movingViewModelStateValue.onMoveToIndex + 1
-        } else movingViewModelStateValue.onMoveFromIndex
+        if (movingViewModelState.onMoveToIndex > movingViewModelState.onMoveFromIndex) {
+            movingViewModelState.onMoveToIndex + 1
+        } else movingViewModelState.onMoveFromIndex
     val lowIndex =
-        if (movingViewModelStateValue.onMoveToIndex > movingViewModelStateValue.onMoveFromIndex) {
-            movingViewModelStateValue.onMoveFromIndex + 1
-        } else movingViewModelStateValue.onMoveToIndex
+        if (movingViewModelState.onMoveToIndex > movingViewModelState.onMoveFromIndex) {
+            movingViewModelState.onMoveFromIndex + 1
+        } else movingViewModelState.onMoveToIndex
     val maxSequence = viewModel.getMaxSequence()
 
     val modifier = Modifier
@@ -131,7 +129,7 @@ fun DraggableItem(
             IntOffset(
                 0, offsetY.roundToInt() +
                         if (item.sequence - 1 in lowIndex until highIndex) {
-                            movingViewModelStateValue.movingOffset
+                            movingViewModelState.movingOffset
                         } else 0
             )
         }
@@ -146,7 +144,7 @@ fun DraggableItem(
             if (!isDragging) movingViewModel.value = movingViewModel.value.copy(
                 yPositionList = movingViewModel.value.yPositionList + centerPosition
             )
-            Log.d("yPositionListCheck1", movingViewModelStateValue.yPositionList.toString())
+            Log.d("yPositionListCheck1", movingViewModelState.yPositionList.toString())
         }
 
     Box(
@@ -231,7 +229,15 @@ fun DraggableItem(
                                 },
                                 onDragEnd = {
                                     isDragging = false
-//                                    onDragEnd(yPosition, item.sequence - 1)
+                                    viewModel.moveItem(
+                                        fromIndex = movingViewModelState.onMoveFromIndex,
+                                        toIndex = movingViewModelState.onMoveToIndex)
+                                    viewModel.movingState.value = viewModel.movingState.value.copy(
+                                        onMoveToIndex = 0,
+                                        onMoveFromIndex = 0,
+                                        movingOffset = 0,
+                                        yPositionList = emptySet()
+                                    )
                                     offsetY = 0f
                                 },
                                 onDragCancel = {
@@ -242,7 +248,7 @@ fun DraggableItem(
                                     offsetY += dragAmount.y
                                     change.consume()
                                     var tempToIndex = 0
-                                    for ((index, value) in movingViewModelStateValue.yPositionList.withIndex()) {
+                                    for ((index, value) in movingViewModelState.yPositionList.withIndex()) {
                                         if (yPosition > value) {
                                             tempToIndex = index + 1
                                         } else {
@@ -255,8 +261,8 @@ fun DraggableItem(
                                         movingViewModel.value.copy(onMoveFromIndex = item.sequence - 1)
                                     movingViewModel.value = movingViewModel.value.copy(
                                         movingOffset = when {
-                                            movingViewModelStateValue.onMoveToIndex > movingViewModelStateValue.onMoveFromIndex -> -height
-                                            movingViewModelStateValue.onMoveToIndex < movingViewModelStateValue.onMoveFromIndex -> height
+                                            movingViewModelState.onMoveToIndex > movingViewModelState.onMoveFromIndex -> -height
+                                            movingViewModelState.onMoveToIndex < movingViewModelState.onMoveFromIndex -> height
                                             else -> 0
                                         }
                                     )
@@ -397,7 +403,6 @@ fun bodyBox(
     }
     return isFocused
 }
-
 
 //@Preview(showBackground = true)
 //@Composable
