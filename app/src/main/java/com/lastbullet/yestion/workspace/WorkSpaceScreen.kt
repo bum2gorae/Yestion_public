@@ -59,6 +59,7 @@ fun WorkSpaceScreen(
     var onMoveFromIndex by remember { mutableIntStateOf(0) }
     val contentState = viewModel.contentListState.collectAsState()
     val onMovingState = viewModel.movingState.collectAsState()
+    onMovingState.value.yPositionList = emptySet()
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -110,16 +111,13 @@ fun WorkSpaceScreen(
                     viewModel.moveItem(fromIndex, toIndex)
                 },
                 onFocusLost = { changedText ->
-                    viewModel.updateFirebase(
+                    val newItem = Items(
                         it.id,
                         changedText,
                         it.typeFlag,
                         if (it.sequence > 0) it.sequence else maxSequence + 1
                     )
-                },
-                onPositionSave = { yPositionCenter ->
-                    Log.d("yPosition check",yPositionList.toString())
-                    if (maxSequence > yPositionList.size) yPositionList.add(yPositionCenter)
+                    viewModel.updateFirebase(newItem)
                 },
                 movingOffset,
                 onMoveToIndex,
@@ -136,7 +134,6 @@ fun DraggableItem(
     onMove: (Float, Int, Int) -> Unit,
     onDragEnd: (Float, Int) -> Unit,
     onFocusLost: (String) -> Unit,
-    onPositionSave: (Float) -> Unit,
     movingOffset: Int,
     onMoveToIndex: Int,
     onMoveFromIndex: Int
@@ -155,6 +152,8 @@ fun DraggableItem(
         highIndex += 1
     } else highIndex = onMoveFromIndex
 
+    val tempYpositionList = mutableSetOf<Float>()
+
     val modifier = Modifier
         .background(color = Color.Transparent)
         .fillMaxWidth()
@@ -170,7 +169,7 @@ fun DraggableItem(
             yPosition = layoutCoordinates.positionInWindow().y
             val size: IntSize = layoutCoordinates.size
             height = size.height
-            if (!isDragging) onPositionSave(yPosition - (height / 2))
+            if (!isDragging) tempYpositionList.add(yPosition)
         }
 
     Box(
