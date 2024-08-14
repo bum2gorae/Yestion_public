@@ -50,6 +50,7 @@ import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 
@@ -70,6 +71,7 @@ fun WorkSpaceScreen(
         items(
             contentState.value,
             key = { "${it.id}_${it.contents}_${it.sequence}_${it.typeFlag}" }) { it ->
+            viewModel.sortList()
             Log.d("content test", it.toString())
             DraggableItem(
                 viewModel = viewModel,
@@ -229,6 +231,7 @@ fun DraggableItem(
                                 },
                                 onDragEnd = {
                                     isDragging = false
+                                    Log.d("toindextest",movingViewModelState.onMoveToIndex.toString())
                                     viewModel.moveItem(
                                         fromIndex = movingViewModelState.onMoveFromIndex,
                                         toIndex = movingViewModelState.onMoveToIndex)
@@ -251,12 +254,13 @@ fun DraggableItem(
                                     for ((index, value) in movingViewModelState.yPositionList.withIndex()) {
                                         if (yPosition > value) {
                                             tempToIndex = index + 1
+                                            Log.d("tempindextest",tempToIndex.toString())
                                         } else {
                                             break
                                         }
                                     }
                                     movingViewModel.value =
-                                        movingViewModel.value.copy(onMoveToIndex = tempToIndex)
+                                        movingViewModel.value.copy(onMoveToIndex = tempToIndex.let { if (it>maxSequence) maxSequence-1 else it})
                                     movingViewModel.value =
                                         movingViewModel.value.copy(onMoveFromIndex = item.sequence - 1)
                                     movingViewModel.value = movingViewModel.value.copy(

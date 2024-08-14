@@ -32,6 +32,8 @@ data class OnMovingData(
 
 class ContentViewModel : ViewModel() {
     val firebaseUrl = "https://sparta-f5aee-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    val fireRealTimeDatabase =
+        Firebase.database(firebaseUrl)
     val contentListState = MutableStateFlow<List<Items>>(emptyList())
     val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0, 0, 0, emptySet()))
 
@@ -39,10 +41,78 @@ class ContentViewModel : ViewModel() {
         firebaseInit()
     }
 
+    private fun firebaseInit() {
+        val workspaceDB = fireRealTimeDatabase.getReference("workspace")
+
+        // 데이터베이스 리스너 등록 (UI 스레드에서 실행)
+        workspaceDB.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                viewModelScope.launch {
+                    val currentDateTime = LocalDateTime.now()
+                    val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
+                    val formattedDateTime = currentDateTime.format(formatter)
+                    val decimalValue = formattedDateTime.toLong()
+                    val uniqueKey = get62Code(decimalValue)
+                    var count = 1
+                    Log.d("Firebase", "Data change detected: $snapshot")
+
+                    val newList = mutableListOf<Items>()
+
+                    if (snapshot.exists()) {
+                        snapshot.children.forEach { it ->
+                            newList.add(
+                                Items(
+                                    it.child("id").value.toString(),
+                                    it.child("contents").value.toString(),
+                                    it.child("typeFlag").value.toString(),
+                                    it.child("sequence").getValue(Int::class.java) ?: 0
+                                )
+                            )
+                            count++
+                        }
+                    } else {
+                        addContent(Items("test", "", "title", 1))
+                    }
+                    newList.forEach {
+                        Log.d("DataListenerCheck", it.toString())
+                    }
+                    contentListState.value = newList
+
+                    sortList()
+                    val maxSequence = getMaxSequence()
+                    // 마지막 아이템의 contents가 비어있지 않은 경우, 새로운 빈 아이템 추가
+                    if (contentListState.value.isNotEmpty() && contentListState.value.last().contents.isNotEmpty()) {
+                        newList.add(
+                            Items(
+                                "test${maxSequence + 1}${uniqueKey}",
+                                "",
+                                "body",
+                                maxSequence + 1
+                            )
+                        )
+                        contentListState.value = newList
+                    }
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.w(TAG, "loadPost:onCancelled", databaseError.toException())
+            }
+        })
+        sortList()
+    }
+
     fun addContent(item: Items) {
         val updatedList = contentListState.value.toMutableList()
         updatedList.add(item)
         contentListState.value = updatedList
+        val workspaceDB = fireRealTimeDatabase.getReference("workspace")
+        workspaceDB.push().setValue(item).addOnSuccessListener {
+            Log.d("Firebase", "Item added successfully")
+        }.addOnFailureListener { exception ->
+            Log.d("Firebase", "Failed to add item: ${exception.message}")
+        }
+        sortList()
     }
 
     fun removeContent(item: Items) {
@@ -151,72 +221,8 @@ class ContentViewModel : ViewModel() {
         return contentListState.value.maxOfOrNull { it.sequence } ?: 0
     }
 
-    private fun firebaseInit() {
-        // FireBase RealTime Database 초기화
-        val fireRealTimeDatabase =
-            Firebase.database(firebaseUrl)
-        val workspaceDB = fireRealTimeDatabase.getReference("workspace")
-
-        // 데이터베이스 리스너 등록 (UI 스레드에서 실행)
-        workspaceDB.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                viewModelScope.launch {
-                    val currentDateTime = LocalDateTime.now()
-                    val formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss")
-                    val formattedDateTime = currentDateTime.format(formatter)
-                    val decimalValue = formattedDateTime.toLong()
-                    val uniqueKey = get62Code(decimalValue)
-                    var count = 1
-                    Log.d("Firebase", "Data change detected: $snapshot")
-
-                    val newList = mutableListOf<Items>()
-
-                    if (snapshot.exists()) {
-                        snapshot.children.forEach { it ->
-                            newList.add(
-                                Items(
-                                    it.child("id").value.toString(),
-                                    it.child("contents").value.toString(),
-                                    it.child("typeFlag").value.toString(),
-                                    it.child("sequence").getValue(Int::class.java) ?: 0
-                                )
-                            )
-                            count++
-                        }
-                    } else {
-                        addContent(Items("test", "", "title", 1))
-                    }
-                    newList.forEach {
-                        Log.d("DataListenerCheck", it.toString())
-                    }
-                    contentListState.value = newList
-
-                    sortList()
-                    val maxSequence = getMaxSequence()
-                    // 마지막 아이템의 contents가 비어있지 않은 경우, 새로운 빈 아이템 추가
-                    if (contentListState.value.isNotEmpty() && contentListState.value.last().contents.isNotEmpty()) {
-                        newList.add(
-                            Items(
-                                "test${maxSequence + 1}${uniqueKey}",
-                                "",
-                                "body",
-                                maxSequence + 1
-                            )
-                        )
-                        contentListState.value = newList
-                    }
-                }
-            }
-
-            override fun onCancelled(databaseError: DatabaseError) {
-                Log.w(TAG, "loadPost:onCancelled", databaseError.toException())
-            }
-        })
-    }
-
     fun sortList() {
-        val sortedListState = contentListState.value.sortedWith(compareBy { it.sequence })
-        contentListState.value = sortedListState
+        contentListState.value = contentListState.value.sortedWith(compareBy { it.sequence })
     }
 
     private fun updateSequence(updateList: MutableList<Items>) {
@@ -226,8 +232,6 @@ class ContentViewModel : ViewModel() {
     }
 
     fun updateFirebase(item: Items) {
-        val fireRealTimeDatabase =
-            Firebase.database(firebaseUrl)
         val workspaceDB = fireRealTimeDatabase.getReference("workspace")
         val updates = mapOf(
             "id" to item.id,
@@ -275,7 +279,6 @@ class ContentViewModel : ViewModel() {
         contentListState.value = newList
         updateSequence(newList)
         sequenceChange(itemState, toIndex+1)
-        sortList()
     }
 
     //고유 key생성 로직
