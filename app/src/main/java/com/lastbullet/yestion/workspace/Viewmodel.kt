@@ -22,7 +22,7 @@ data class Items(
     var sequence: Int
 )
 
-data class OnMovingData(
+data class dragData(
     //drag용 data class
     var onMoveFromIndex: Int, //drag시작 index
     var onMoveToIndex: Int, //drag목표 index
@@ -35,7 +35,7 @@ class ContentViewModel : ViewModel() {
     val fireRealTimeDatabase =
         Firebase.database(firebaseUrl)
     val contentListState = MutableStateFlow<List<Items>>(emptyList())
-    val movingState = MutableStateFlow<OnMovingData>(OnMovingData(0, 0, 0, emptySet()))
+    val movingState = MutableStateFlow<dragData>(dragData(0, 0, 0, emptySet()))
 
     init {
         firebaseInit()

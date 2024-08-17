@@ -46,6 +46,7 @@ import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
 import androidx.compose.ui.zIndex
 import com.lastbullet.yestion.workspace.DragIcon
+import com.lastbullet.yestion.workspace.PopupMenuBar
 import com.lastbullet.yestion.workspace.bodyBox
 import com.lastbullet.yestion.workspace.titleBox
 import kotlin.math.roundToInt
@@ -91,6 +92,7 @@ fun DraggableItem(
     var height by remember { mutableIntStateOf(0) }
     var isFocused by remember { mutableStateOf(false) }
 
+    //Drag를 위한 Index 계산
     val highIndex =
         if (movingViewModelState.onMoveToIndex > movingViewModelState.onMoveFromIndex) {
             movingViewModelState.onMoveToIndex + 1
@@ -104,6 +106,7 @@ fun DraggableItem(
         .background(color = Color.Transparent)
         .fillMaxWidth()
         .offset {
+            //
             IntOffset(
                 0, offsetY.roundToInt() +
                         if (item.sequence - 1 in lowIndex until highIndex) {
@@ -159,21 +162,9 @@ fun DraggableItem(
                     )
                 }
                 if (isMenuToggled) {
-                    Popup(
-                        alignment = Alignment.TopEnd,
-                        onDismissRequest = { isMenuToggled = false },
-                        properties = PopupProperties(focusable = true)
-                    ) {
-                        FloatingMenu(
-                            onDeleteOption = { viewModel.removeContent(item) },
-                            onTypeChangeOption = {
-                                viewModel.typeChange(
-                                    item,
-                                    if (item.typeFlag == "body") "title" else "body"
-                                )
-                            }
-                        )
-                    }
+                    PopupMenuBar(viewModel = viewModel,
+                        item = item,
+                        onDismissRequest = { isMenuToggled = false })
                 }
                 DragIcon(viewModel,
                     item,
@@ -187,39 +178,7 @@ fun DraggableItem(
     }
 }
 
-@Composable
-fun FloatingMenu(
-    onDeleteOption: () -> Unit,
-    onTypeChangeOption: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .padding(end = 45.dp)
-            .background(color = Color(0xfff7f4eb), RoundedCornerShape(8.dp))
-            .padding(horizontal = 8.dp, vertical = 6.dp)
-    ) {
-        MenuItem(R.drawable.ic_delete, { onDeleteOption() })
-        MenuItem(R.drawable.ic_type_change, { onTypeChangeOption() })
-    }
-}
 
-@Composable
-fun MenuItem(
-    imageVector: Int,
-    onTapOptions: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .padding(horizontal = 6.dp)
-            .pointerInput(Unit) {
-                detectTapGestures {
-                    onTapOptions()
-                }
-            }
-    ) {
-        Icon(imageVector = ImageVector.vectorResource(id = imageVector), contentDescription = null)
-    }
-}
 
 //@Preview(showBackground = true)
 //@Composable
